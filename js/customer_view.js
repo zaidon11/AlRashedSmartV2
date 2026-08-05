@@ -1,7 +1,7 @@
 // ==========================================
 // AlRashed Smart V2
 // customer_view.js
-// Version: 2.0.0-beta2
+// Version: 2.0.0-beta3
 // ==========================================
 
 
@@ -11,11 +11,18 @@ function openCustomer(id){
     const customer = customers[id];
 
 
-    if(!customer) return;
+    if(!customer){
+
+        alert("الزبون غير موجود");
+
+        return;
+
+    }
 
 
 
     const box = document.getElementById("customersList");
+
 
 
     let html = `
@@ -27,14 +34,14 @@ function openCustomer(id){
         <h2>${customer.name}</h2>
 
 
-        <p>📱 الجهاز: ${customer.model}</p>
+        <p>📱 الجهاز: ${customer.model || ""}</p>
 
 
         <p>
 
         💰 المتبقي:
 
-        ${Number(customer.remaining).toLocaleString()}
+        ${Number(customer.remaining || 0).toLocaleString()}
 
         د.ع
 
@@ -45,32 +52,29 @@ function openCustomer(id){
         <hr>
 
 
-
         <h3>جدول الأقساط</h3>
-
 
 
     `;
 
 
 
-    Object.values(customer.months)
-
-    .forEach(month=>{
+    Object.values(customer.months || {}).forEach(month=>{
 
 
-        let status="❌ غير مدفوع";
+        let status = "❌ غير مدفوع";
 
 
-        if(month.status==="paid"){
+        if(month.status === "paid"){
 
-            status="✅ مدفوع";
+            status = "✅ مدفوع";
 
         }
 
-        else if(month.status==="partial"){
 
-            status="🟡 ناقص";
+        if(month.status === "partial"){
+
+            status = "🟡 ناقص";
 
         }
 
@@ -82,91 +86,57 @@ function openCustomer(id){
         <div class="monthCard">
 
 
-            <h4>
+        <h4>
 
-            الشهر ${month.id}
+        الشهر ${month.id}
 
-            (${month.year}-${String(month.monthNumber).padStart(2,"0")})
-
-            </h4>
+        </h4>
 
 
+        <p>
 
-            <p>
+        📅 الاستحقاق:
 
-            📅 تاريخ الاستحقاق:
+        ${month.dueDate}
 
-            ${month.dueDate}
-
-            </p>
-
+        </p>
 
 
-            <p>
+        <p>
 
-            💵 المطلوب:
+        💵 المطلوب:
 
-            ${month.required.toLocaleString()}
+        ${Number(month.required).toLocaleString()}
 
-            </p>
-
-
-
-            <p>
-
-            💵 المدفوع:
-
-            ${month.paid.toLocaleString()}
-
-            </p>
+        </p>
 
 
+        <p>
 
-            <p>
+        💵 المدفوع:
 
-            الحالة:
+        ${Number(month.paid).toLocaleString()}
 
-            ${status}
-
-            </p>
-
+        </p>
 
 
-            ${
-            month.paidDate
+        <p>
 
-            ?
+        الحالة:
 
-            `<small>
+        ${status}
 
-            آخر دفع:
-
-            ${new Date(month.paidDate).toLocaleDateString("ar-IQ")}
-
-            </small>`
-
-            :
-
-            ""
-
-            }
+        </p>
 
 
+        <button onclick="manualPayBox('${id}','${month.key}')">
 
-            <br><br>
+        دفع هذا الشهر
 
-
-
-            <button onclick="manualPayBox('${id}','${month.key}')">
-
-            دفع هذا الشهر
-
-            </button>
-
+        </button>
 
 
         </div>
-
 
 
         `;
@@ -179,19 +149,14 @@ function openCustomer(id){
     html += `
 
 
-
     <hr>
-
-
-    <h3>دفع تلقائي</h3>
 
 
     <button onclick="automaticPayBox('${id}')">
 
-    💰 توزيع دفعة تلقائياً
+    💰 دفع تلقائي
 
     </button>
-
 
 
     </div>
@@ -209,22 +174,23 @@ function openCustomer(id){
 
 
 
-// دفع شهر محدد
-
-function manualPayBox(customerId, monthKey){
-
-
-    const amount = prompt(
-
-        "اكتب مبلغ الدفع لهذا الشهر"
-
-    );
 
 
 
-    if(amount){
+async function manualPayBox(customerId, monthKey){
 
-        manualPayment(
+
+    const amount = prompt("اكتب مبلغ الدفع");
+
+
+    if(!amount) return;
+
+
+
+    try{
+
+
+        await manualPayment(
 
             customerId,
 
@@ -234,7 +200,22 @@ function manualPayBox(customerId, monthKey){
 
         );
 
+
+        openCustomer(customerId);
+
+
     }
+
+    catch(e){
+
+
+        console.error(e);
+
+        alert("حدث خطأ بالدفع اليدوي");
+
+
+    }
+
 
 }
 
@@ -242,22 +223,22 @@ function manualPayBox(customerId, monthKey){
 
 
 
-// دفع تلقائي
-
-function automaticPayBox(customerId){
 
 
-    const amount = prompt(
-
-        "اكتب مبلغ الدفعة"
-
-    );
+async function automaticPayBox(customerId){
 
 
+    const amount = prompt("اكتب مبلغ الدفعة");
 
-    if(amount){
 
-        automaticPayment(
+    if(!amount) return;
+
+
+
+    try{
+
+
+        await automaticPayment(
 
             customerId,
 
@@ -265,6 +246,21 @@ function automaticPayBox(customerId){
 
         );
 
+
+        openCustomer(customerId);
+
+
     }
+
+    catch(e){
+
+
+        console.error(e);
+
+        alert("حدث خطأ بالدفع التلقائي");
+
+
+    }
+
 
 }
