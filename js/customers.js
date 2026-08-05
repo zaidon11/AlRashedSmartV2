@@ -1,124 +1,164 @@
 // ==========================================
 // AlRashed Smart V2
-// Customers Manager
+// customers.js
 // Version: 2.0.0-beta1
 // ==========================================
 
-// إضافة زبون جديد
-async function addCustomer(customerData) {
+let customers = {};
+
+function loadCustomers() {
+
+    customersRef.on("value", snapshot => {
+
+        customers = snapshot.val() || {};
+
+        renderCustomers();
+
+        updateDashboard();
+
+    });
+
+}
+
+async function addCustomer(data) {
 
     try {
 
-        // إنشاء رقم تلقائي للزبون
-        const customerRef = db.ref(`${DATABASE}/customers`).push();
+        const ref = customersRef.push();
 
-        const customerId = customerRef.key;
+        const id = ref.key;
 
-        // حساب المتبقي
         const remaining =
-            customerData.totalPrice - customerData.downPayment;
+            data.totalPrice - data.downPayment;
 
-        // حساب عدد الأشهر
         const monthsCount = Math.ceil(
-            remaining / customerData.monthlyInstallment
+            remaining / data.monthlyInstallment
         );
 
-        // إنشاء الأشهر
         const months = generateMonths(
-            customerData.purchaseDate,
+
+            data.purchaseDate,
+
             monthsCount,
-            customerData.monthlyInstallment
+
+            data.monthlyInstallment,
+
+            data.fixedDay
+
         );
 
-        // بيانات الزبون
-        const customer = {
+        await ref.set({
 
-            id: customerId,
+            id:id,
 
-            name: customerData.name,
+            name:data.name,
 
-            phone: customerData.phone,
+            phone:data.phone,
 
-            model: customerData.model,
+            model:data.model,
 
-            totalPrice: customerData.totalPrice,
+            totalPrice:data.totalPrice,
 
-            downPayment: customerData.downPayment,
+            downPayment:data.downPayment,
 
-            remaining: remaining,
+            remaining:remaining,
 
-            monthlyInstallment:
-                customerData.monthlyInstallment,
+            monthlyInstallment:data.monthlyInstallment,
 
-            fixedDay:
-                customerData.fixedDay,
+            fixedDay:data.fixedDay,
 
-            purchaseDate:
-                customerData.purchaseDate,
+            purchaseDate:data.purchaseDate,
 
-            status: "active",
+            status:"active",
 
-            createdAt: Date.now(),
+            createdAt:Date.now(),
 
-            months: months,
+            months:months,
 
-            payments: {}
+            payments:{}
 
-        };
+        });
 
-        await customerRef.set(customer);
+        alert("تم إضافة الزبون");
 
-        alert("✅ تم إضافة الزبون");
+    }
 
-        return customerId;
-
-    } catch (e) {
+    catch(e){
 
         console.error(e);
 
-        alert("حدث خطأ أثناء الحفظ");
+        alert("حدث خطأ");
 
     }
 
 }
 
+function renderCustomers(){
 
-// إنشاء جدول الأشهر
-function generateMonths(startDate, count, installment) {
+    const container = document.getElementById("customersList");
 
-    const months = {};
+    container.innerHTML = "";
 
-    const date = new Date(startDate);
+    Object.values(customers).forEach(c=>{
 
-    for (let i = 0; i < count; i++) {
+        container.innerHTML += `
 
-        const year = date.getFullYear();
+        <div
 
-        const month =
-            String(date.getMonth() + 1).padStart(2, "0");
+            class="customerCard"
 
-        const key = `${year}-${month}`;
+            data-name="${c.name.toLowerCase()}"
 
-        months[key] = {
+        >
 
-            month: key,
+            <div class="customerName">
 
-            required: installment,
+                ${c.name}
 
-            paid: 0,
+            </div>
 
-            remaining: installment,
+            <div class="customerModel">
 
-            status: "unpaid",
+                ${c.model}
 
-            payments: []
+            </div>
 
-        };
+            <div class="customerRemaining">
 
-        date.setMonth(date.getMonth() + 1);
+                المتبقي :
 
-    }
+                ${Number(c.remaining).toLocaleString()}
 
-    return months;
+                د.ع
+
+            </div>
+
+        </div>
+
+        `;
+
+    });
+
+}
+
+function updateDashboard(){
+
+    let totalRemaining = 0;
+
+    Object.values(customers).forEach(c=>{
+
+        totalRemaining += Number(c.remaining);
+
+    });
+
+    document.getElementById("customersCount").innerText =
+        Object.keys(customers).length;
+
+    document.getElementById("remainingMoney").innerText =
+        totalRemaining.toLocaleString();
+
+    document.getElementById("lateCustomers").innerText = 0;
+
+    document.getElementById("todayInstallments").innerText = 0;
 
 }
