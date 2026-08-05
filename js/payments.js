@@ -1,148 +1,330 @@
 // ==========================================
 // AlRashed Smart V2
 // payments.js
-// Version: 2.0.0-beta1
+// Version: 2.0.0-beta3
+// نظام الدفع اليدوي + التلقائي
 // ==========================================
 
-async function payMonth(
 
-    customerId,
 
-    monthKey,
+// ==========================================
+// 1) الدفع اليدوي
+// تختار الشهر وتدفع له
+// ==========================================
 
-    amount
+async function manualPayment(customerId, monthKey, amount){
 
-){
 
-    if(amount<=0) return;
+    const customer = customers[customerId];
 
-    const customer=customers[customerId];
-
-    if(!customer) return;
-
-    const month=customer.months[monthKey];
-
-    if(!month) return;
-
-    const value=Number(amount);
-
-    month.paid+=value;
-
-    month.remaining=Math.max(
-
-        0,
-
-        month.required-month.paid
-
-    );
-
-    month.status=
-
-        month.remaining===0
-
-        ? "paid"
-
-        : "partial";
-
-    month.paidDate=new Date().toISOString();
-
-    month.payments.push({
-
-        amount:value,
-
-        date:new Date().toISOString()
-
-    });
-
-    customer.remaining=
-
-        calculateRemaining(customer);
-
-    await customersRef
-
-        .child(customerId)
-
-        .update({
-
-            months:customer.months,
-
-            remaining:customer.remaining
-
-        });
-
-}
-
-async function autoDistributePayment(
-
-    customerId,
-
-    amount
-
-){
-
-    let balance=Number(amount);
-
-    const customer=customers[customerId];
 
     if(!customer) return;
 
-    const months=getUnpaidMonths(customer);
 
-    for(const month of months){
 
-        if(balance<=0) break;
+    const month = customer.months[monthKey];
 
-        const need=month.remaining;
 
-        const pay=Math.min(
+    if(!month){
 
-            need,
+        alert("الشهر غير موجود");
 
-            balance
-
-        );
-
-        month.paid+=pay;
-
-        month.remaining-=pay;
-
-        month.status=
-
-            month.remaining===0
-
-            ? "paid"
-            : "partial";
-
-        month.paidDate=
-
-            new Date().toISOString();
-
-        month.payments.push({
-
-            amount:pay,
-
-            date:new Date().toISOString()
-
-        });
-
-        balance-=pay;
+        return;
 
     }
 
-    customer.remaining=
 
-        calculateRemaining(customer);
+
+    amount = Number(amount);
+
+
+
+    if(amount <= 0){
+
+        alert("المبلغ غير صحيح");
+
+        return;
+
+    }
+
+
+
+    month.paid += amount;
+
+
+
+    month.remaining = Math.max(
+
+        0,
+
+        month.required - month.paid
+
+    );
+
+
+
+    month.status =
+
+    month.remaining === 0
+
+    ?
+
+    "paid"
+
+    :
+
+    "partial";
+
+
+
+    const payment = {
+
+        amount: amount,
+
+        date: new Date().toISOString(),
+
+        type:"manual"
+
+    };
+
+
+
+    month.payments.push(payment);
+
+
+
+    month.paidDate = payment.date;
+
+
+
+    customer.remaining =
+
+    calculateRemaining(customer);
+
+
 
     await customersRef
 
-        .child(customerId)
+    .child(customerId)
 
-        .update({
+    .update({
 
-            months:customer.months,
+        months:customer.months,
 
-            remaining:customer.remaining
+        remaining:customer.remaining
+
+    });
+
+
+
+    alert("تم تسجيل الدفع للشهر المحدد ✅");
+
+
+}
+
+
+
+
+
+// ==========================================
+// 2) الدفع التلقائي
+// يبدأ من أقدم شهر غير مدفوع
+// ==========================================
+
+
+async function automaticPayment(customerId, amount){
+
+
+    const customer = customers[customerId];
+
+
+    if(!customer) return;
+
+
+
+    let money = Number(amount);
+
+
+
+    if(money <= 0){
+
+        alert("المبلغ غير صحيح");
+
+        return;
+
+    }
+
+
+
+    const unpaidMonths =
+
+    getUnpaidMonths(customer);
+
+
+
+    for(const month of unpaidMonths){
+
+
+
+        if(money <= 0)
+
+            break;
+
+
+
+        const needed = month.remaining;
+
+
+
+        const pay = Math.min(
+
+            needed,
+
+            money
+
+        );
+
+
+
+        month.paid += pay;
+
+
+
+        month.remaining -= pay;
+
+
+
+        month.status =
+
+        month.remaining === 0
+
+        ?
+
+        "paid"
+
+        :
+
+        "partial";
+
+
+
+        const payment = {
+
+
+            amount:pay,
+
+
+            date:new Date().toISOString(),
+
+
+            type:"automatic"
+
+
+        };
+
+
+
+        month.payments.push(payment);
+
+
+
+        month.paidDate = payment.date;
+
+
+
+        money -= pay;
+
+
+    }
+
+
+
+    customer.remaining =
+
+    calculateRemaining(customer);
+
+
+
+    await customersRef
+
+    .child(customerId)
+
+    .update({
+
+        months:customer.months,
+
+        remaining:customer.remaining
+
+    });
+
+
+
+    alert("تم توزيع الدفعة تلقائياً ✅");
+
+
+}
+
+
+
+
+
+
+// ==========================================
+// سجل كل الدفعات للزبون
+// ==========================================
+
+
+function getPaymentsHistory(customer){
+
+
+    let list=[];
+
+
+
+    if(!customer.months)
+
+        return list;
+
+
+
+    Object.values(customer.months)
+
+    .forEach(month=>{
+
+
+        month.payments.forEach(p=>{
+
+
+            list.push({
+
+
+                month:month.key,
+
+
+                monthNumber:month.id,
+
+
+                amount:p.amount,
+
+
+                date:p.date,
+
+
+                type:p.type
+
+
+            });
+
 
         });
+
+
+
+    });
+
+
+
+    return list;
+
 
 }
