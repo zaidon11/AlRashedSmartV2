@@ -1,16 +1,10 @@
 // ==========================================
 // AlRashed Smart V2
 // payments.js
-// Version: 2.0.0-beta3
-// نظام الدفع اليدوي + التلقائي
+// Version: 2.0.0-beta4
 // ==========================================
 
 
-
-// ==========================================
-// 1) الدفع اليدوي
-// تختار الشهر وتدفع له
-// ==========================================
 
 async function manualPayment(customerId, monthKey, amount){
 
@@ -18,7 +12,13 @@ async function manualPayment(customerId, monthKey, amount){
     const customer = customers[customerId];
 
 
-    if(!customer) return;
+    if(!customer){
+
+        alert("الزبون غير موجود");
+
+        return;
+
+    }
 
 
 
@@ -27,7 +27,7 @@ async function manualPayment(customerId, monthKey, amount){
 
     if(!month){
 
-        alert("الشهر غير موجود");
+        alert("القسط غير موجود");
 
         return;
 
@@ -49,7 +49,15 @@ async function manualPayment(customerId, monthKey, amount){
 
 
 
-    month.paid += amount;
+    if(!month.payments){
+
+        month.payments = [];
+
+    }
+
+
+
+    month.paid = Number(month.paid || 0) + amount;
 
 
 
@@ -57,7 +65,7 @@ async function manualPayment(customerId, monthKey, amount){
 
         0,
 
-        month.required - month.paid
+        Number(month.required) - Number(month.paid)
 
     );
 
@@ -67,13 +75,9 @@ async function manualPayment(customerId, monthKey, amount){
 
     month.remaining === 0
 
-    ?
+    ? "paid"
 
-    "paid"
-
-    :
-
-    "partial";
+    : "partial";
 
 
 
@@ -97,27 +101,22 @@ async function manualPayment(customerId, monthKey, amount){
 
 
 
-    customer.remaining =
-
-    calculateRemaining(customer);
+    customer.remaining = calculateCustomerRemaining(customer);
 
 
 
-    await customersRef
+    await customersRef.child(customerId).update({
 
-    .child(customerId)
+        months: customer.months,
 
-    .update({
-
-        months:customer.months,
-
-        remaining:customer.remaining
+        remaining: customer.remaining
 
     });
 
 
 
-    alert("تم تسجيل الدفع للشهر المحدد ✅");
+    alert("تم تسجيل الدفع ✅");
+
 
 
 }
@@ -126,19 +125,19 @@ async function manualPayment(customerId, monthKey, amount){
 
 
 
-// ==========================================
-// 2) الدفع التلقائي
-// يبدأ من أقدم شهر غير مدفوع
-// ==========================================
-
-
 async function automaticPayment(customerId, amount){
 
 
     const customer = customers[customerId];
 
 
-    if(!customer) return;
+    if(!customer){
+
+        alert("الزبون غير موجود");
+
+        return;
+
+    }
 
 
 
@@ -156,13 +155,13 @@ async function automaticPayment(customerId, amount){
 
 
 
-    const unpaidMonths =
+    const months = Object.values(customer.months)
 
-    getUnpaidMonths(customer);
+    .sort((a,b)=>a.id-b.id);
 
 
 
-    for(const month of unpaidMonths){
+    for(const month of months){
 
 
 
@@ -172,22 +171,31 @@ async function automaticPayment(customerId, amount){
 
 
 
-        const needed = month.remaining;
+        if(month.remaining <= 0)
+
+            continue;
 
 
 
         const pay = Math.min(
 
-            needed,
+            money,
 
-            money
+            month.remaining
 
         );
 
 
 
-        month.paid += pay;
+        if(!month.payments){
 
+            month.payments=[];
+
+        }
+
+
+
+        month.paid += pay;
 
 
         month.remaining -= pay;
@@ -198,58 +206,43 @@ async function automaticPayment(customerId, amount){
 
         month.remaining === 0
 
-        ?
+        ? "paid"
 
-        "paid"
-
-        :
-
-        "partial";
+        : "partial";
 
 
 
-        const payment = {
+        month.paidDate =
 
+        new Date().toISOString();
+
+
+
+        month.payments.push({
 
             amount:pay,
 
-
-            date:new Date().toISOString(),
-
+            date:month.paidDate,
 
             type:"automatic"
 
-
-        };
-
-
-
-        month.payments.push(payment);
-
-
-
-        month.paidDate = payment.date;
+        });
 
 
 
         money -= pay;
 
 
+
     }
 
 
 
-    customer.remaining =
-
-    calculateRemaining(customer);
+    customer.remaining = calculateCustomerRemaining(customer);
 
 
 
-    await customersRef
-
-    .child(customerId)
-
-    .update({
+    await customersRef.child(customerId).update({
 
         months:customer.months,
 
@@ -268,63 +261,26 @@ async function automaticPayment(customerId, amount){
 
 
 
-
-// ==========================================
-// سجل كل الدفعات للزبون
-// ==========================================
+function calculateCustomerRemaining(customer){
 
 
-function getPaymentsHistory(customer){
-
-
-    let list=[];
+    let total = 0;
 
 
 
-    if(!customer.months)
-
-        return list;
-
-
-
-    Object.values(customer.months)
+    Object.values(customer.months || {})
 
     .forEach(month=>{
 
 
-        month.payments.forEach(p=>{
-
-
-            list.push({
-
-
-                month:month.key,
-
-
-                monthNumber:month.id,
-
-
-                amount:p.amount,
-
-
-                date:p.date,
-
-
-                type:p.type
-
-
-            });
-
-
-        });
-
+        total += Number(month.remaining || 0);
 
 
     });
 
 
 
-    return list;
+    return total;
 
 
 }
