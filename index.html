@@ -3,148 +3,176 @@
 
 <head>
 
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>AlRashed Smart V2</title>
+<title>AlRashed Smart V2</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.googleapis.com">
 
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css">
 
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-    
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 </head>
-    
-<script src="js/customer_view.js"></script>
-    
+
+
 <body>
+
 
 <div id="loadingScreen">
 
-    <div class="loadingBox">
+<div class="loadingBox">
 
-        <h2>📱 مركز الراشد</h2>
+<h2>📱 مركز الراشد</h2>
 
-        <p>Smart Installments V2</p>
+<p>Smart Installments V2</p>
 
-        <div class="loader"></div>
-
-    </div>
+<div class="loader"></div>
 
 </div>
 
+</div>
+
+
+
 <header class="topHeader">
 
-    <div>
+<div>
 
-        <h1>📱 مركز الراشد</h1>
+<h1>📱 مركز الراشد</h1>
 
-        <small>Smart Installments V2 Beta</small>
+<small>Smart Installments V2 Beta</small>
 
-    </div>
+</div>
 
-    <button id="addCustomerBtn">
 
-        + إضافة زبون
+<button id="addCustomerBtn">
 
-    </button>
++ إضافة زبون
+
+</button>
+
 
 </header>
 
+
+
+
 <section class="dashboard">
 
-    <div class="statCard">
 
-        <span>👥</span>
+<div class="statCard">
 
-        <h2 id="customersCount">0</h2>
+<span>👥</span>
 
-        <p>عدد الزبائن</p>
+<h2 id="customersCount">0</h2>
 
-    </div>
+<p>عدد الزبائن</p>
 
-    <div class="statCard">
+</div>
 
-        <span>💰</span>
 
-        <h2 id="remainingMoney">0</h2>
 
-        <p>المتبقي</p>
+<div class="statCard">
 
-    </div>
+<span>💰</span>
 
-    <div class="statCard">
+<h2 id="remainingMoney">0</h2>
 
-        <span>⚠️</span>
+<p>المتبقي</p>
 
-        <h2 id="lateCustomers">0</h2>
+</div>
 
-        <p>المتأخرين</p>
 
-    </div>
 
-    <div class="statCard">
+<div class="statCard">
 
-        <span>📅</span>
+<span>⚠️</span>
 
-        <h2 id="todayInstallments">0</h2>
+<h2 id="lateCustomers">0</h2>
 
-        <p>أقساط اليوم</p>
+<p>المتأخرين</p>
 
-    </div>
+</div>
+
+
+
+<div class="statCard">
+
+<span>📅</span>
+
+<h2 id="todayInstallments">0</h2>
+
+<p>أقساط اليوم</p>
+
+</div>
+
 
 </section>
+
+
+
 
 <section class="searchSection">
 
-    <input
+<input
 
-        type="text"
+id="searchInput"
 
-        id="searchInput"
+type="text"
 
-        placeholder="🔍 ابحث عن زبون..."
+placeholder="🔍 ابحث عن زبون..."
 
-    >
+>
 
-</section>
-
-<section id="customersList">
 
 </section>
+
+
+
+<section id="customersList"></section>
+
+
+
 
 <div id="customerModal" class="modal">
 
+
 <div class="modalContent">
 
-<h2>
 
-إضافة زبون
+<h2>إضافة زبون</h2>
 
-</h2>
 
-<input id="customerName" type="text" placeholder="اسم الزبون">
 
-<input id="customerPhone" type="text" placeholder="رقم الهاتف">
+<input id="customerName" placeholder="اسم الزبون">
 
-<input id="customerModel" type="text" placeholder="نوع الجهاز">
+
+<input id="customerPhone" placeholder="رقم الهاتف">
+
+
+<input id="customerModel" placeholder="نوع الجهاز">
+
 
 <input id="customerPrice" type="number" placeholder="السعر الكلي">
 
+
 <input id="customerDownPayment" type="number" placeholder="المقدمة">
+
 
 <input id="customerMonthly" type="number" placeholder="القسط الشهري">
 
+
 <input id="customerFixedDay" type="number" min="1" max="30" placeholder="يوم الاستحقاق">
+
 
 <button id="saveCustomerBtn">
 
@@ -152,16 +180,21 @@
 
 </button>
 
+
 <button id="closeModalBtn">
 
 إلغاء
 
 </button>
 
+
 </div>
 
 </div>
-    
+
+
+
+
 <script src="js/firebase.js"></script>
 
 <script src="js/months.js"></script>
@@ -178,41 +211,57 @@
 
 <script src="js/app.js"></script>
 
+
+
 <script>
 
-document.addEventListener("DOMContentLoaded", () => {
 
-    if (typeof initApp === "function") {
+document.addEventListener("DOMContentLoaded",()=>{
 
-        initApp();
 
-    }
+if(typeof initApp==="function"){
+
+initApp();
+
+}
+
 
 });
 
-document.getElementById("addCustomerBtn").onclick = () => {
 
-    document.getElementById("customerModal").style.display = "flex";
 
-};
+document.getElementById("addCustomerBtn").onclick=()=>{
 
-document.getElementById("closeModalBtn").onclick = () => {
-
-    document.getElementById("customerModal").style.display = "none";
+document.getElementById("customerModal").style.display="flex";
 
 };
 
-window.onclick = function(e){
 
-    if(e.target.id==="customerModal"){
 
-        document.getElementById("customerModal").style.display="none";
+document.getElementById("closeModalBtn").onclick=()=>{
 
-    }
+document.getElementById("customerModal").style.display="none";
 
 };
+
+
+
+window.onclick=(e)=>{
+
+
+if(e.target.id==="customerModal"){
+
+document.getElementById("customerModal").style.display="none";
+
+}
+
+
+};
+
 
 </script>
+
+
 
 </body>
 
