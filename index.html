@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AlRashed Smart V2 - إدارة الأقساط</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <header class="card" style="display: flex; justify-content: space-between; align-items: center;">
+        <h2>AlRashed Smart V2</h2>
+        <button id="themeToggle" style="width: auto; padding: 6px 12px;">تغيير المظهر</button>
+    </header>
+
+    <!-- لوحة التحكم الإحصائية -->
+    <section class="card">
+        <h3>لوحة التحكم</h3>
+        <div class="grid-stats" style="margin-top: 12px;">
+            <div class="stat-item">
+                <div>إجمالي الزبائن</div>
+                <div class="stat-value" id="statTotalCustomers">0</div>
+            </div>
+            <div class="stat-item">
+                <div>إجمالي المتبقي</div>
+                <div class="stat-value" id="statTotalRemaining">0 د.ع</div>
+            </div>
+            <div class="stat-item">
+                <div>إجمالي المقبوض</div>
+                <div class="stat-value" id="statTotalCollected">0 د.ع</div>
+            </div>
+            <div class="stat-item">
+                <div>المتأخرين</div>
+                <div class="stat-value" id="statOverdueCount" style="color: var(--status-unpaid)">0</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- إضافة زبون جديد -->
+    <section class="card">
+        <h3>إضافة زبون جديد</h3>
+        <form id="addCustomerForm" style="margin-top: 12px;">
+            <input type="text" id="custName" placeholder="اسم الزبون الكامل" required>
+            <input type="tel" id="custPhone" placeholder="رقم الهاتف" required>
+            <input type="text" id="custDevice" placeholder="نوع الجهاز (مثال: iPhone 13)" required>
+            <input type="text" id="custImei" placeholder="رقم IMEI" required>
+            <input type="text" id="custColor" placeholder="لون الجهاز" required>
+            <input type="number" id="custTotalPrice" placeholder="السعر الكلي (مثال: 1000000)" required>
+            <input type="number" id="custDownPayment" placeholder="الدفعة الأولى (مثال: 200000)" required>
+            <input type="number" id="custMonthly" placeholder="القسط الشهري (مثال: 50000)" required>
+            <input type="number" id="custPayDay" placeholder="يوم الاستحقاق الشهري (1-31)" min="1" max="31" required>
+            <input type="date" id="custPurchaseDate" required>
+            <input type="text" id="custNotes" placeholder="ملاحظات (اختياري)">
+            <button type="submit">حفظ الزبون وإنشاء الأقساط</button>
+        </form>
+    </section>
+
+    <!-- البحث وقائمة الزبائن -->
+    <section class="card">
+        <h3>قائمة الزبائن والبحث</h3>
+        <input type="text" id="searchInput" placeholder="بحث لحظي بالاسم، رقم الهاتف، أو الـ IMEI..." style="margin-top: 12px;">
+        <div id="customersList"></div>
+    </section>
+
+    <!-- النسخ الاحتياطي ونقل البيانات -->
+    <section class="card">
+        <h3>أدوات النظام</h3>
+        <div style="display: flex; gap: 8px; margin-top: 12px;">
+            <button id="exportBtn">Export JSON</button>
+            <button id="importBtn">Import JSON</button>
+            <button id="migrateBtn" style="background-color: #8b5cf6;">نقل البيانات (Migration)</button>
+        </div>
+        <input type="file" id="importFileInput" accept=".json" style="display: none;">
+    </section>
+
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
