@@ -1,69 +1,95 @@
 // ==========================================
 // AlRashed Smart V2
-// Main App File
+// app.js
+// Version: 2.0.0-beta1
 // ==========================================
 
-console.log("🚀 AlRashed Smart V2 Started");
+function initApp() {
 
-document.addEventListener("DOMContentLoaded", () => {
+    hideLoading();
 
-    console.log("📄 Page Loaded");
+    loadCustomers();
 
-    // فحص الاتصال مع Firebase
-    testConnection();
-
-});
-
-
-// ==========================================
-// فحص الاتصال
-// ==========================================
-function testConnection() {
-
-    db.ref(DATABASE).once("value")
-        .then((snapshot) => {
-
-            console.log("✅ Database Connected");
-
-            // إذا النسخة الجديدة غير موجودة
-            if (!snapshot.exists()) {
-
-                console.log("📦 إنشاء قاعدة البيانات الجديدة...");
-
-                db.ref(DATABASE).set({
-                    version: "2.0.0-beta1",
-                    createdAt: Date.now()
-                });
-
-            }
-
-            showSystemMessage("✅ تم الاتصال بقاعدة البيانات");
-
-        })
-        .catch((error) => {
-
-            console.error("❌ Firebase Error:", error);
-
-            showSystemMessage("❌ خطأ بالاتصال");
-
-        });
+    bindEvents();
 
 }
 
+function bindEvents() {
 
-// ==========================================
-// رسائل بسيطة للمستخدم
-// ==========================================
-function showSystemMessage(msg) {
+    document
+        .getElementById("saveCustomerBtn")
+        .addEventListener("click", saveCustomer);
 
-    const box = document.getElementById("customersList");
+    document
+        .getElementById("searchInput")
+        .addEventListener("input", searchCustomers);
 
-    if (box) {
-        box.innerHTML = `
-            <div class="customer-card">
-                ${msg}
-            </div>
-        `;
+}
+
+function hideLoading() {
+
+    setTimeout(() => {
+
+        document
+            .getElementById("loadingScreen")
+            .style.display = "none";
+
+    }, 700);
+
+}
+
+function saveCustomer() {
+
+    const customer = {
+
+        name: document.getElementById("customerName").value.trim(),
+
+        phone: document.getElementById("customerPhone").value.trim(),
+
+        model: document.getElementById("customerModel").value.trim(),
+
+        totalPrice: Number(document.getElementById("customerPrice").value),
+
+        downPayment: Number(document.getElementById("customerDownPayment").value),
+
+        monthlyInstallment: Number(document.getElementById("customerMonthly").value),
+
+        fixedDay: Number(document.getElementById("customerFixedDay").value),
+
+        purchaseDate: new Date().toISOString()
+
+    };
+
+    if (!customer.name) {
+
+        alert("اكتب اسم الزبون");
+
+        return;
+
     }
+
+    addCustomer(customer);
+
+    document.getElementById("customerModal").style.display = "none";
+
+}
+
+function searchCustomers() {
+
+    const value = document
+        .getElementById("searchInput")
+        .value
+        .toLowerCase();
+
+    document.querySelectorAll(".customerCard").forEach(card => {
+
+        const name = card.dataset.name;
+
+        card.style.display =
+            name.includes(value)
+                ? "block"
+                : "none";
+
+    });
 
 }
