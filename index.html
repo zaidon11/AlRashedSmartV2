@@ -9,38 +9,12 @@
 
 <title>AlRashed Smart V2</title>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-
 <link rel="stylesheet" href="css/style.css">
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 </head>
 
 
 <body>
-
-
-<div id="loadingScreen">
-
-<div class="loadingBox">
-
-<h2>📱 مركز الراشد</h2>
-
-<p>Smart Installments V2</p>
-
-<div class="loader"></div>
-
-</div>
-
-</div>
-
 
 
 <header class="topHeader">
@@ -49,7 +23,7 @@
 
 <h1>📱 مركز الراشد</h1>
 
-<small>Smart Installments V2 Beta</small>
+<p>Smart Installments V2</p>
 
 </div>
 
@@ -71,8 +45,6 @@
 
 <div class="statCard">
 
-<span>👥</span>
-
 <h2 id="customersCount">0</h2>
 
 <p>عدد الزبائن</p>
@@ -83,9 +55,7 @@
 
 <div class="statCard">
 
-<span>💰</span>
-
-<h2 id="remainingMoney">0</h2>
+<h2 id="totalRemaining">0</h2>
 
 <p>المتبقي</p>
 
@@ -95,25 +65,12 @@
 
 <div class="statCard">
 
-<span>⚠️</span>
+<h2 id="paidMoney">0</h2>
 
-<h2 id="lateCustomers">0</h2>
-
-<p>المتأخرين</p>
+<p>المقبوض</p>
 
 </div>
 
-
-
-<div class="statCard">
-
-<span>📅</span>
-
-<h2 id="todayInstallments">0</h2>
-
-<p>أقساط اليوم</p>
-
-</div>
 
 
 </section>
@@ -121,15 +78,15 @@
 
 
 
-<section class="searchSection">
+
+<section class="searchBox">
+
 
 <input
 
 id="searchInput"
 
-type="text"
-
-placeholder="🔍 ابحث عن زبون..."
+placeholder="بحث عن زبون..."
 
 >
 
@@ -138,7 +95,13 @@ placeholder="🔍 ابحث عن زبون..."
 
 
 
-<section id="customersList"></section>
+
+
+<section id="customersList">
+
+
+</section>
+
 
 
 
@@ -146,121 +109,79 @@ placeholder="🔍 ابحث عن زبون..."
 <div id="customerModal" class="modal">
 
 
-<div class="modalContent">
+<div class="modalBox">
 
 
-<h2>إضافة زبون</h2>
+<h2>
+
+إضافة زبون
+
+</h2>
 
 
 
-<input id="customerName" placeholder="اسم الزبون">
+<input id="name" placeholder="اسم الزبون">
 
 
-<input id="customerPhone" placeholder="رقم الهاتف">
+<input id="phone" placeholder="رقم الهاتف">
 
 
-<input id="customerModel" placeholder="نوع الجهاز">
+<input id="device" placeholder="نوع الجهاز">
 
 
-<input id="customerPrice" type="number" placeholder="السعر الكلي">
+<input id="totalPrice" type="number" placeholder="السعر الكلي">
 
 
-<input id="customerDownPayment" type="number" placeholder="المقدمة">
+<input id="firstPayment" type="number" placeholder="الدفعة الأولى">
 
 
-<input id="customerMonthly" type="number" placeholder="القسط الشهري">
+<input id="monthly" type="number" placeholder="القسط الشهري">
 
 
-<input id="customerFixedDay" type="number" min="1" max="30" placeholder="يوم الاستحقاق">
+<input id="payDay" type="number" placeholder="يوم الدفع">
 
 
-<button id="saveCustomerBtn">
 
-حفظ الزبون
+<button id="saveCustomer">
+
+حفظ
 
 </button>
 
 
-<button id="closeModalBtn">
+
+<button id="closeModal">
 
 إلغاء
 
 </button>
 
 
-</div>
 
 </div>
 
+
+</div>
+
+
+
+
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 
 
 <script src="js/firebase.js"></script>
 
-<script src="js/months.js"></script>
-
-<script src="js/payments.js"></script>
+<script src="js/database.js"></script>
 
 <script src="js/customers.js"></script>
 
-<script src="js/customer_view.js"></script>
-
-<script src="js/receipt.js"></script>
-
-<script src="js/migration.js"></script>
+<script src="js/payments.js"></script>
 
 <script src="js/app.js"></script>
-
-
-
-<script>
-
-
-document.addEventListener("DOMContentLoaded",()=>{
-
-
-if(typeof initApp==="function"){
-
-initApp();
-
-}
-
-
-});
-
-
-
-document.getElementById("addCustomerBtn").onclick=()=>{
-
-document.getElementById("customerModal").style.display="flex";
-
-};
-
-
-
-document.getElementById("closeModalBtn").onclick=()=>{
-
-document.getElementById("customerModal").style.display="none";
-
-};
-
-
-
-window.onclick=(e)=>{
-
-
-if(e.target.id==="customerModal"){
-
-document.getElementById("customerModal").style.display="none";
-
-}
-
-
-};
-
-
-</script>
-
 
 
 </body>
