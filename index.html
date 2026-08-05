@@ -2,97 +2,208 @@
 <html lang="ar" dir="rtl">
 
 <head>
+
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AlRashed Smart V2 (Beta)</title>
+
+    <title>AlRashed Smart V2</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="css/style.css">
 
-    <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
 </head>
 
 <body>
 
-<header class="top-bar">
-    <h1>📱 مركز الراشد</h1>
-    <p>AlRashed Smart Installments V2 (Beta)</p>
+<div id="loadingScreen">
+
+    <div class="loadingBox">
+
+        <h2>📱 مركز الراشد</h2>
+
+        <p>Smart Installments V2</p>
+
+        <div class="loader"></div>
+
+    </div>
+
+</div>
+
+<header class="topHeader">
+
+    <div>
+
+        <h1>📱 مركز الراشد</h1>
+
+        <small>Smart Installments V2 Beta</small>
+
+    </div>
+
+    <button id="addCustomerBtn">
+
+        + إضافة زبون
+
+    </button>
+
 </header>
 
-<main class="container">
+<section class="dashboard">
 
-    <section class="card">
-        <h2>إحصائيات</h2>
+    <div class="statCard">
 
-        <div class="stats">
+        <span>👥</span>
 
-            <div class="stat-box">
-                <span id="customersCount">0</span>
-                <small>عدد الزبائن</small>
-            </div>
+        <h2 id="customersCount">0</h2>
 
-            <div class="stat-box">
-                <span id="lateCustomers">0</span>
-                <small>المتأخرين</small>
-            </div>
+        <p>عدد الزبائن</p>
 
-            <div class="stat-box">
-                <span id="totalRemaining">0</span>
-                <small>المتبقي</small>
-            </div>
+    </div>
 
-        </div>
+    <div class="statCard">
 
-    </section>
+        <span>💰</span>
 
-    <section class="card">
+        <h2 id="remainingMoney">0</h2>
 
-        <input
-            id="searchInput"
-            type="text"
-            placeholder="🔍 ابحث عن زبون">
+        <p>المتبقي</p>
 
-        <button id="addCustomerBtn">
-            ➕ إضافة زبون
-        </button>
+    </div>
 
-    </section>
+    <div class="statCard">
 
-    <section class="card">
+        <span>⚠️</span>
 
-        <h2>الزبائن</h2>
+        <h2 id="lateCustomers">0</h2>
 
-        <div id="customersList">
+        <p>المتأخرين</p>
 
-            جاري تحميل البيانات...
+    </div>
 
-        </div>
+    <div class="statCard">
 
-    </section>
+        <span>📅</span>
 
-</main>
+        <h2 id="todayInstallments">0</h2>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+        <p>أقساط اليوم</p>
 
-<!-- Project Files -->
+    </div>
+
+</section>
+
+<section class="searchSection">
+
+    <input
+
+        type="text"
+
+        id="searchInput"
+
+        placeholder="🔍 ابحث عن زبون..."
+
+    >
+
+</section>
+
+<section id="customersList">
+
+</section>
+
+<div id="customerModal" class="modal">
+
+<div class="modalContent">
+
+<h2>
+
+إضافة زبون
+
+</h2>
+
+<input id="customerName" type="text" placeholder="اسم الزبون">
+
+<input id="customerPhone" type="text" placeholder="رقم الهاتف">
+
+<input id="customerModel" type="text" placeholder="نوع الجهاز">
+
+<input id="customerPrice" type="number" placeholder="السعر الكلي">
+
+<input id="customerDownPayment" type="number" placeholder="المقدمة">
+
+<input id="customerMonthly" type="number" placeholder="القسط الشهري">
+
+<input id="customerFixedDay" type="number" min="1" max="30" placeholder="يوم الاستحقاق">
+
+<button id="saveCustomerBtn">
+
+حفظ الزبون
+
+</button>
+
+<button id="closeModalBtn">
+
+إلغاء
+
+</button>
+
+</div>
+
+</div>
 
 <script src="js/firebase.js"></script>
 
-<script src="js/helpers.js"></script>
-
-<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
 
 <script src="js/customers.js"></script>
 
-<script src="js/months.js"></script>
-
 <script src="js/payments.js"></script>
 
-<script src="js/migration.js"></script>
+<script src="js/months.js"></script>
 
-<script src="js/app.js"></script>
+<script>
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    if (typeof initApp === "function") {
+
+        initApp();
+
+    }
+
+});
+
+document.getElementById("addCustomerBtn").onclick = () => {
+
+    document.getElementById("customerModal").style.display = "flex";
+
+};
+
+document.getElementById("closeModalBtn").onclick = () => {
+
+    document.getElementById("customerModal").style.display = "none";
+
+};
+
+window.onclick = function(e){
+
+    if(e.target.id==="customerModal"){
+
+        document.getElementById("customerModal").style.display="none";
+
+    }
+
+};
+
+</script>
 
 </body>
 
