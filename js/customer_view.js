@@ -1,43 +1,66 @@
 // ==========================================
 // AlRashed Smart V2
 // customer_view.js
-// Version: 2.0.0-beta1
+// Version: 2.0.0-beta2
 // ==========================================
+
 
 function openCustomer(id){
 
+
     const customer = customers[id];
+
 
     if(!customer) return;
 
 
+
+    const box = document.getElementById("customersList");
+
+
     let html = `
 
-    <div class="customerCard">
+
+    <div class="customerPage">
+
 
         <h2>${customer.name}</h2>
 
+
         <p>📱 الجهاز: ${customer.model}</p>
 
-        <p>💰 المتبقي:
 
-        ${Number(customer.remaining).toLocaleString()} د.ع
+        <p>
+
+        💰 المتبقي:
+
+        ${Number(customer.remaining).toLocaleString()}
+
+        د.ع
 
         </p>
+
 
 
         <hr>
 
 
-        <h3>الأشهر:</h3>
+
+        <h3>جدول الأقساط</h3>
+
+
 
     `;
 
 
-    Object.values(customer.months).forEach(month=>{
+
+    Object.values(customer.months)
+
+    .forEach(month=>{
 
 
-        let status = "";
+        let status="❌ غير مدفوع";
+
 
         if(month.status==="paid"){
 
@@ -47,63 +70,103 @@ function openCustomer(id){
 
         else if(month.status==="partial"){
 
-            status="🟡 مدفوع جزئياً";
+            status="🟡 ناقص";
 
         }
 
-        else{
-
-            status="❌ غير مدفوع";
-
-        }
 
 
         html += `
 
-        <div class="monthBox">
 
-            <b>
+        <div class="monthCard">
+
+
+            <h4>
 
             الشهر ${month.id}
 
-            (${month.year}-${month.month})
+            (${month.year}-${String(month.monthNumber).padStart(2,"0")})
 
-            </b>
+            </h4>
 
-            <br>
 
-            📅 الاستحقاق:
+
+            <p>
+
+            📅 تاريخ الاستحقاق:
 
             ${month.dueDate}
 
-            <br>
+            </p>
+
+
+
+            <p>
 
             💵 المطلوب:
 
             ${month.required.toLocaleString()}
 
-            <br>
+            </p>
+
+
+
+            <p>
 
             💵 المدفوع:
 
             ${month.paid.toLocaleString()}
 
-            <br>
+            </p>
+
+
+
+            <p>
+
+            الحالة:
 
             ${status}
 
+            </p>
 
-            <br>
 
 
-            <button onclick="payMonthPrompt('${id}','${month.key}')">
+            ${
+            month.paidDate
 
-            تسجيل دفعة لهذا الشهر
+            ?
+
+            `<small>
+
+            آخر دفع:
+
+            ${new Date(month.paidDate).toLocaleDateString("ar-IQ")}
+
+            </small>`
+
+            :
+
+            ""
+
+            }
+
+
+
+            <br><br>
+
+
+
+            <button onclick="manualPayBox('${id}','${month.key}')">
+
+            دفع هذا الشهر
 
             </button>
 
 
+
         </div>
+
 
 
         `;
@@ -112,31 +175,91 @@ function openCustomer(id){
     });
 
 
-    html += `</div>`;
+
+    html += `
 
 
-    document.getElementById("customersList").innerHTML=html;
+
+    <hr>
+
+
+    <h3>دفع تلقائي</h3>
+
+
+    <button onclick="automaticPayBox('${id}')">
+
+    💰 توزيع دفعة تلقائياً
+
+    </button>
+
+
+
+    </div>
+
+
+    `;
+
+
+
+    box.innerHTML = html;
+
 
 }
 
 
-function payMonthPrompt(customerId,monthKey){
+
+
+// دفع شهر محدد
+
+function manualPayBox(customerId, monthKey){
 
 
     const amount = prompt(
 
-        "أدخل مبلغ الدفعة"
+        "اكتب مبلغ الدفع لهذا الشهر"
 
     );
 
 
+
     if(amount){
 
-        payMonth(
+        manualPayment(
 
             customerId,
 
             monthKey,
+
+            Number(amount)
+
+        );
+
+    }
+
+}
+
+
+
+
+
+// دفع تلقائي
+
+function automaticPayBox(customerId){
+
+
+    const amount = prompt(
+
+        "اكتب مبلغ الدفعة"
+
+    );
+
+
+
+    if(amount){
+
+        automaticPayment(
+
+            customerId,
 
             Number(amount)
 
