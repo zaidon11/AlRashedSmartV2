@@ -4,36 +4,65 @@
 // Version: 2.0.0-beta1
 // ==========================================
 
+
 let customers = {};
 
-function loadCustomers() {
 
-    customersRef.on("value", snapshot => {
+
+// تحميل الزبائن
+
+function loadCustomers(){
+
+
+    customersRef.on("value", snapshot=>{
+
 
         customers = snapshot.val() || {};
 
+
         renderCustomers();
+
 
         updateDashboard();
 
+
     });
+
 
 }
 
-async function addCustomer(data) {
 
-    try {
+
+// إضافة زبون
+
+async function addCustomer(data){
+
+
+    try{
+
 
         const ref = customersRef.push();
 
+
         const id = ref.key;
 
+
+
         const remaining =
-            data.totalPrice - data.downPayment;
+
+        data.totalPrice - data.downPayment;
+
+
 
         const monthsCount = Math.ceil(
-            remaining / data.monthlyInstallment
+
+            remaining /
+
+            data.monthlyInstallment
+
         );
+
+
 
         const months = generateMonths(
 
@@ -47,69 +76,115 @@ async function addCustomer(data) {
 
         );
 
+
+
         await ref.set({
+
 
             id:id,
 
+
             name:data.name,
+
 
             phone:data.phone,
 
+
             model:data.model,
+
 
             totalPrice:data.totalPrice,
 
+
             downPayment:data.downPayment,
+
 
             remaining:remaining,
 
+
             monthlyInstallment:data.monthlyInstallment,
+
 
             fixedDay:data.fixedDay,
 
+
             purchaseDate:data.purchaseDate,
+
 
             status:"active",
 
+
             createdAt:Date.now(),
+
 
             months:months,
 
+
             payments:{}
+
 
         });
 
-        alert("تم إضافة الزبون");
+
+
+        alert("✅ تم إضافة الزبون");
+
+
 
     }
 
-    catch(e){
+    catch(error){
 
-        console.error(e);
 
-        alert("حدث خطأ");
+        console.error(error);
+
+
+        alert("حدث خطأ بالحفظ");
+
 
     }
+
 
 }
 
+
+
+
+// عرض الزبائن
+
 function renderCustomers(){
 
-    const container = document.getElementById("customersList");
 
-    container.innerHTML = "";
+    const box =
 
-    Object.values(customers).forEach(c=>{
+    document.getElementById("customersList");
 
-        container.innerHTML += `
+
+
+    if(!box) return;
+
+
+
+    box.innerHTML="";
+
+
+
+    Object.values(customers)
+
+    .forEach(c=>{
+
+
+        box.innerHTML += `
+
 
         <div
 
-            class="customerCard"
+        class="customerCard"
 
-            data-name="${c.name.toLowerCase()}"
+        data-name="${c.name.toLowerCase()}"
 
-        >
+        onclick="openCustomer('${c.id}')">
+
 
             <div class="customerName">
 
@@ -117,15 +192,17 @@ function renderCustomers(){
 
             </div>
 
+
             <div class="customerModel">
 
-                ${c.model}
+                ${c.model || ""}
 
             </div>
 
+
             <div class="customerRemaining">
 
-                المتبقي :
+                المتبقي:
 
                 ${Number(c.remaining).toLocaleString()}
 
@@ -133,32 +210,14 @@ function renderCustomers(){
 
             </div>
 
+
         </div>
+
 
         `;
 
-    });
-
-}
-
-function updateDashboard(){
-
-    let totalRemaining = 0;
-
-    Object.values(customers).forEach(c=>{
-
-        totalRemaining += Number(c.remaining);
 
     });
 
-    document.getElementById("customersCount").innerText =
-        Object.keys(customers).length;
-
-    document.getElementById("remainingMoney").innerText =
-        totalRemaining.toLocaleString();
-
-    document.getElementById("lateCustomers").innerText = 0;
-
-    document.getElementById("todayInstallments").innerText = 0;
 
 }
