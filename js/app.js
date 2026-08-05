@@ -4,7 +4,8 @@
 // Version: 2.0.0-beta1
 // ==========================================
 
-function initApp() {
+
+function initApp(){
 
     hideLoading();
 
@@ -14,53 +15,114 @@ function initApp() {
 
 }
 
-function bindEvents() {
 
-    document
-        .getElementById("saveCustomerBtn")
-        .addEventListener("click", saveCustomer);
+// ربط الأزرار
 
-    document
-        .getElementById("searchInput")
-        .addEventListener("input", searchCustomers);
+function bindEvents(){
+
+
+    const saveBtn =
+    document.getElementById("saveCustomerBtn");
+
+
+    if(saveBtn){
+
+        saveBtn.onclick = saveCustomer;
+
+    }
+
+
+
+    const search =
+    document.getElementById("searchInput");
+
+
+    if(search){
+
+        search.oninput = searchCustomers;
+
+    }
+
 
 }
 
-function hideLoading() {
 
-    setTimeout(() => {
+// إخفاء التحميل
 
-        document
-            .getElementById("loadingScreen")
-            .style.display = "none";
+function hideLoading(){
 
-    }, 700);
+
+    const loading =
+    document.getElementById("loadingScreen");
+
+
+    if(loading){
+
+        setTimeout(()=>{
+
+            loading.style.display="none";
+
+        },700);
+
+    }
+
 
 }
 
-function saveCustomer() {
 
-    const customer = {
+// حفظ زبون
 
-        name: document.getElementById("customerName").value.trim(),
+function saveCustomer(){
 
-        phone: document.getElementById("customerPhone").value.trim(),
 
-        model: document.getElementById("customerModel").value.trim(),
+    const data = {
 
-        totalPrice: Number(document.getElementById("customerPrice").value),
 
-        downPayment: Number(document.getElementById("customerDownPayment").value),
+        name:
 
-        monthlyInstallment: Number(document.getElementById("customerMonthly").value),
+        document.getElementById("customerName").value.trim(),
 
-        fixedDay: Number(document.getElementById("customerFixedDay").value),
 
-        purchaseDate: new Date().toISOString()
+        phone:
+
+        document.getElementById("customerPhone").value.trim(),
+
+
+        model:
+
+        document.getElementById("customerModel").value.trim(),
+
+
+        totalPrice:
+
+        Number(document.getElementById("customerPrice").value),
+
+
+        downPayment:
+
+        Number(document.getElementById("customerDownPayment").value),
+
+
+        monthlyInstallment:
+
+        Number(document.getElementById("customerMonthly").value),
+
+
+        fixedDay:
+
+        Number(document.getElementById("customerFixedDay").value),
+
+
+        purchaseDate:
+
+        new Date().toISOString()
+
 
     };
 
-    if (!customer.name) {
+
+
+    if(!data.name){
 
         alert("اكتب اسم الزبون");
 
@@ -68,28 +130,140 @@ function saveCustomer() {
 
     }
 
-    addCustomer(customer);
 
-    document.getElementById("customerModal").style.display = "none";
+
+    addCustomer(data);
+
+
+
+    document.getElementById("customerModal").style.display="none";
+
 
 }
 
-function searchCustomers() {
 
-    const value = document
-        .getElementById("searchInput")
-        .value
-        .toLowerCase();
 
-    document.querySelectorAll(".customerCard").forEach(card => {
+// البحث
 
-        const name = card.dataset.name;
+function searchCustomers(){
+
+
+    const value =
+
+    document
+
+    .getElementById("searchInput")
+
+    .value
+
+    .toLowerCase();
+
+
+
+    document
+
+    .querySelectorAll(".customerCard")
+
+    .forEach(card=>{
+
+
+        const name =
+
+        card.dataset.name;
+
+
 
         card.style.display =
-            name.includes(value)
-                ? "block"
-                : "none";
+
+        name.includes(value)
+
+        ?
+
+        "block"
+
+        :
+
+        "none";
+
 
     });
+
+
+}
+
+
+
+// الإحصائيات
+
+function updateDashboard(){
+
+
+    let count = 0;
+
+    let money = 0;
+
+    let late = 0;
+
+
+
+    Object.values(customers)
+
+    .forEach(c=>{
+
+
+        count++;
+
+
+        money +=
+
+        Number(c.remaining || 0);
+
+
+
+        if(c.months){
+
+
+            Object.values(c.months)
+
+            .forEach(m=>{
+
+
+                if(
+
+                    m.status !== "paid"
+
+                    &&
+
+                    new Date(m.dueDate)
+
+                    < new Date()
+
+                ){
+
+                    late++;
+
+                }
+
+
+            });
+
+
+        }
+
+
+    });
+
+
+
+    document.getElementById("customersCount").innerText=count;
+
+
+    document.getElementById("remainingMoney").innerText=
+
+    money.toLocaleString();
+
+
+    document.getElementById("lateCustomers").innerText=late;
+
 
 }
