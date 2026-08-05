@@ -1,145 +1,104 @@
-// js/payments.js
-import { db, ref, get, update, push, ROOT_NODE } from "./firebase.js";
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
 
-/**
- * الدفع اليدوي لشهر محدد
- */
-export async function processManualPayment(customerId, monthIndex, amount, employee = "Admin") {
-    try {
-        const customerRef = ref(db, `${ROOT_NODE}/customers/${customerId}`);
-        const snapshot = await get(customerRef);
-        if (!snapshot.exists()) throw new Error("الزبون غير موجود");
-
-        const customer = snapshot.val();
-        let month = customer.months[monthIndex];
-
-        if (month.status === "Paid") throw new Error("هذا الشهر مدفوع بالكامل بالفعل");
-
-        const paymentAmount = Number(amount);
-        if (paymentAmount <= 0) throw new Error("أدخل مبلغ دفع صحيح");
-
-        const dateNow = new Date().toISOString();
-        const receiptNumber = "REC-" + Date.now().toString().slice(-6);
-
-        const paymentRecord = {
-            amount: paymentAmount,
-            date: dateNow,
-            type: "Manual",
-            month: month.monthNumber,
-            employee: employee,
-            receiptNumber: receiptNumber
-        };
-
-        month.paid += paymentAmount;
-        month.remaining = Math.max(0, month.required - month.paid);
-
-        if (month.remaining === 0) {
-            month.status = "Paid";
-            month.paidDate = dateNow;
-        } else {
-            month.status = "Partial";
-        }
-
-        if (!month.payments) month.payments = [];
-        month.payments.push(paymentRecord);
-
-        // إدراج الدفعة في سجل الدفعات العام الخاص بالزبون
-        customer.remaining = Math.max(0, customer.remaining - paymentAmount);
-        if (customer.remaining === 0) customer.status = "Completed";
-
-        await update(customerRef, {
-            months: customer.months,
-            remaining: customer.remaining,
-            status: customer.status
-        });
-
-        // إدراج الدفعة في سجل global payments
-        const globalPaymentRef = push(ref(db, `${ROOT_NODE}/payments`));
-        await update(globalPaymentRef, { ...paymentRecord, customerId: customerId, customerName: customer.name });
-
-        return { success: true, receipt: paymentRecord };
-    } catch (error) {
-        return { success: false, message: error.message };
-    }
+:root {
+    --bg-primary: #f8fafc;
+    --bg-card: #ffffff;
+    --text-primary: #0f172a;
+    --text-secondary: #64748b;
+    --accent-color: #2563eb;
+    --accent-hover: #1d4ed8;
+    --border-color: #e2e8f0;
+    --status-paid: #10b981;
+    --status-partial: #f59e0b;
+    --status-unpaid: #ef4444;
+    --radius: 12px;
 }
 
-/**
- * الدفع التلقائي متسلسل من أقدم شهر غير مكتمل
- */
-export async function processAutoPayment(customerId, totalAmount, employee = "Admin") {
-    try {
-        const customerRef = ref(db, `${ROOT_NODE}/customers/${customerId}`);
-        const snapshot = await get(customerRef);
-        if (!snapshot.exists()) throw new Error("الزبون غير موجود");
+[data-theme="dark"] {
+    --bg-primary: #0f172a;
+    --bg-card: #1e293b;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --border-color: #334155;
+}
 
-        const customer = snapshot.val();
-        let remainingToDistribute = Number(totalAmount);
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Cairo', sans-serif;
+    transition: background-color 0.2s, color 0.2s;
+}
 
-        if (remainingToDistribute <= 0) throw new Error("أدخل مبلغ دفع صحيح");
-        if (customer.remaining === 0) throw new Error("جميع أقساط الزبون مسددة بالكامل");
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    direction: rtl;
+    padding: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
 
-        const dateNow = new Date().toISOString();
-        const receiptNumber = "AUTO-" + Date.now().toString().slice(-6);
-        let totalPaidInThisTx = remainingToDistribute;
+.card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
 
-        for (let i = 0; i < customer.months.length; i++) {
-            if (remainingToDistribute <= 0) break;
+.grid-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+}
 
-            let month = customer.months[i];
-            if (month.status === "Paid") continue; // تخطي الأشهر المكتملة
+.stat-item {
+    text-align: center;
+    padding: 12px;
+    border-radius: var(--radius);
+    background-color: var(--bg-primary);
+}
 
-            let neededToComplete = month.required - month.paid;
-            let amountForThisMonth = Math.min(remainingToDistribute, neededToComplete);
+.stat-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--accent-color);
+}
 
-            month.paid += amountForThisMonth;
-            month.remaining = month.required - month.paid;
-            remainingToDistribute -= amountForThisMonth;
+.badge {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+.badge-paid { background-color: rgba(16, 185, 129, 0.15); color: var(--status-paid); }
+.badge-partial { background-color: rgba(245, 158, 11, 0.15); color: var(--status-partial); }
+.badge-unpaid { background-color: rgba(239, 68, 68, 0.15); color: var(--status-unpaid); }
 
-            if (month.remaining === 0) {
-                month.status = "Paid";
-                month.paidDate = dateNow;
-            } else {
-                month.status = "Partial";
-            }
+button {
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    width: 100%;
+}
 
-            const paymentRecord = {
-                amount: amountForThisMonth,
-                date: dateNow,
-                type: "Auto",
-                month: month.monthNumber,
-                employee: employee,
-                receiptNumber: receiptNumber
-            };
+button:hover {
+    background-color: var(--accent-hover);
+}
 
-            if (!month.payments) month.payments = [];
-            month.payments.push(paymentRecord);
-        }
-
-        const actualPaid = totalPaidInThisTx - remainingToDistribute;
-        customer.remaining = Math.max(0, customer.remaining - actualPaid);
-        if (customer.remaining === 0) customer.status = "Completed";
-
-        await update(customerRef, {
-            months: customer.months,
-            remaining: customer.remaining,
-            status: customer.status
-        });
-
-        const mainReceipt = {
-            amount: actualPaid,
-            date: dateNow,
-            type: "Auto",
-            employee: employee,
-            receiptNumber: receiptNumber,
-            customerId: customerId,
-            customerName: customer.name
-        };
-
-        const globalPaymentRef = push(ref(db, `${ROOT_NODE}/payments`));
-        await update(globalPaymentRef, mainReceipt);
-
-        return { success: true, receipt: mainReceipt };
-    } catch (error) {
-        return { success: false, message: error.message };
-    }
+input, select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 6px;
+    margin-bottom: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-card);
+    color: var(--text-primary);
 }
