@@ -41,13 +41,17 @@
             <input type="text" id="custName" placeholder="اسم الزبون الكامل" required>
             <input type="tel" id="custPhone" placeholder="رقم الهاتف" required>
             <input type="text" id="custDevice" placeholder="نوع الجهاز (مثال: iPhone 12 Pro Max)" required>
-            <input type="text" id="custImei" placeholder="رقم IMEI" required>
-            <input type="text" id="custColor" placeholder="لون الجهاز" required>
-            <input type="number" id="custTotalPrice" placeholder="السعر الكلي (د.ع)" required>
-            <input type="number" id="custDownPayment" placeholder="الدفعة الأولى (د.ع)" required>
-            <input type="number" id="custMonthly" placeholder="القسط الشهري (د.ع)" required>
-            <input type="number" id="custPayDay" placeholder="يوم الاستحقاق الشهري (1-31)" min="1" max="31" required>
-            <input type="date" id="custPurchaseDate" required>
+            
+            <!-- تم تحويل الحقول المالية إلى نصية لتفعيل فواصل الآلاف اللحظية بالعراق -->
+            <input type="text" id="custTotalPrice" placeholder="السعر الكلي (د.ع)" required oninput="formatCurrencyInput(this)">
+            <input type="text" id="custDownPayment" placeholder="الدفعة الأولى (د.ع)" required oninput="formatCurrencyInput(this)">
+            <input type="text" id="custMonthly" placeholder="القسط الشهري (د.ع)" required oninput="formatCurrencyInput(this)">
+            
+            <!-- تم تعديل نطاق يوم الاستحقاق ليكون من 1 إلى 30 كحد أقصى وثابت -->
+            <input type="number" id="custPayDay" placeholder="يوم الاستحقاق الشهري (1-30)" min="1" max="30" required>
+            
+            <!-- [تم حذف حقول IMEI ولون الجهاز والتاريخ اليدوي نهائياً من الواجهة للأتمتة] -->
+            
             <input type="text" id="custNotes" placeholder="ملاحظات (اختياري)">
             <button type="submit" style="margin-top: 6px;">حفظ الزبون وإنشاء الأقساط</button>
         </form>
@@ -55,7 +59,7 @@
 
     <section class="card">
         <h3>قائمة الزبائن والبحث</h3>
-        <input type="text" id="searchInput" placeholder="بحث لحظي بالاسم، رقم الهاتف، أو الـ IMEI...">
+        <input type="text" id="searchInput" placeholder="بحث لحظي بالاسم أو رقم الهاتف...">
         <div id="customersList"></div>
     </section>
 
@@ -68,6 +72,18 @@
         </div>
         <input type="file" id="importFileInput" accept=".json" style="display: none;">
     </section>
+
+    <!-- دالة تنسيق الأرقام اللحظية المضافة للملف بدون تخريب أي برمجيات أخرى -->
+    <script>
+        function formatCurrencyInput(input) {
+            let value = input.value.replace(/,/g, '');
+            if (!isNaN(value) && value !== '') {
+                input.value = parseFloat(value).toLocaleString('en-US');
+            } else {
+                input.value = '';
+            }
+        }
+    </script>
 
     <script type="module" src="js/app.js"></script>
 </body>
