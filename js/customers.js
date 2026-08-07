@@ -53,13 +53,12 @@ export async function addCustomer(customerData) {
         const newCustomerRef = push(ref(db, `${ROOT_NODE}/customers`));
         const customerId = newCustomerRef.key;
 
+        // بناء البيانات الصافية بأمان تام ومنع خطأ trim الحاصل سابقاً
         const payload = {
             customerId: customerId,
-            name: customerData.name.trim(),
-            phone: customerData.phone.trim(),
-            device: customerData.device.trim(),
-            imei: customerData.imei.trim(),
-            color: customerData.color.trim(),
+            name: customerData.name ? customerData.name.trim() : "",
+            phone: customerData.phone ? customerData.phone.trim() : "",
+            device: customerData.device ? customerData.device.trim() : "",
             notes: customerData.notes ? customerData.notes.trim() : "",
             totalPrice: totalPrice,
             downPayment: downPayment,
