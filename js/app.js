@@ -12,7 +12,7 @@ if (themeBtn) {
     });
 }
 
-// [ملاحظة: تم حذف حقل تعيين التاريخ اليدوي القديم نهائياً من هنا]
+// [ملاحظة: تم حذف حقل تعيين التاريخ اليدوي القديم نهائياً من هنا لأتمتته]
 
 export async function loadDashboard() {
     const snap = await get(ref(db, `${ROOT_NODE}/customers`));
@@ -50,7 +50,7 @@ export async function loadDashboard() {
         }
         if (isOverdue) overdueCount++;
 
-        // تحديث الفلترة المعتمدة لتعتمد على الاسم ورقم الهاتف فقط
+        // الفلترة المعتمدة للاسم ورقم الهاتف فقط بعد حذف الـ IMEI
         const matchesName = (c.name || '').toLowerCase().includes(searchKeyword);
         const matchesPhone = (c.phone || '').includes(searchKeyword);
 
@@ -62,7 +62,7 @@ export async function loadDashboard() {
                 window.location.href = `customer.html?id=${c.customerId}`;
             });
             
-            // تم الحفاظ على هيكلية الكارد وعرض اللون والبيانات القديمة بأمان إن وجدت
+            // الحفاظ على مرونة العرض للبيانات القديمة بأمان
             const deviceColorInfo = c.color ? ` (${c.color})` : '';
             card.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -89,27 +89,33 @@ if (addForm) {
     addForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        // دالة مساعدة داخلية لتنظيف فواصل الآلاف من الحقول النصية وتحويلها لأرقام نقية
+        // دالة مساعدة محيمة ومضمونة لتنظيف فواصل الآلاف وتحويل المدخلات لأرقام نقية
         const parseCurrencyValue = (id) => {
             const el = document.getElementById(id);
-            if (!el) return 0;
+            if (!el || !el.value) return 0;
             return parseFloat(el.value.replace(/,/g, '')) || 0;
         };
 
-        // توليد تاريخ اليوم والساعة بالاعتماد على الجهاز والإنترنت أوتوماتيكياً
+        // توليد تاريخ اليوم اللحظي تلقائياً عند الضغط على زر الحفظ
         const autoPurchaseDate = new Date().toISOString().split('T')[0];
 
-        // بناء كائن الداتا النظيف والمطابق للـ HTML الجديد بدون حقول زائدة وبأرقام صحيحة
+        // جلب عناصر الحقول للتحقق منها منعاً لخطأ undefined
+        const nameEl = document.getElementById('custName');
+        const phoneEl = document.getElementById('custPhone');
+        const deviceEl = document.getElementById('custDevice');
+        const notesEl = document.getElementById('custNotes');
+
+        // بناء كائن الداتا النظيف والمحمي بالكامل
         const data = {
-            name: document.getElementById('custName').value.trim(),
-            phone: document.getElementById('custPhone').value.trim(),
-            device: document.getElementById('custDevice').value.trim(),
+            name: nameEl ? nameEl.value.trim() : "",
+            phone: phoneEl ? phoneEl.value.trim() : "",
+            device: deviceEl ? deviceEl.value.trim() : "",
             totalPrice: parseCurrencyValue('custTotalPrice'),
             downPayment: parseCurrencyValue('custDownPayment'),
             monthlyInstallment: parseCurrencyValue('custMonthly'),
-            fixedPayDay: parseInt(document.getElementById('custPayDay').value),
+            fixedPayDay: parseInt(document.getElementById('custPayDay')?.value || 0),
             purchaseDate: autoPurchaseDate,
-            notes: document.getElementById('custNotes').value.trim(),
+            notes: notesEl ? notesEl.value.trim() : "",
         };
 
         const res = await addCustomer(data);
