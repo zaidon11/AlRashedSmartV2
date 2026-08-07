@@ -36,7 +36,8 @@
     <section class="card">
         <h3>تسديد دفع تلقائي (تسلسلي)</h3>
         <form id="autoPaymentForm" style="display: flex; gap: 8px; margin-top: 10px;">
-            <input type="number" id="autoPayAmount" placeholder="أدخل مبلغ التسديد التلقائي" required style="margin: 0;">
+            <!-- تم تحويل النوع إلى text لتفعيل الفواصل اللحظية بالتوافق مع العملة العراقية -->
+            <input type="text" id="autoPayAmount" placeholder="أدخل مبلغ التسديد التلقائي" required style="margin: 0;" oninput="formatCurrencyInput(this)">
             <button type="submit" style="width: 140px; shrink: 0;">تسديد تلقائي</button>
         </form>
     </section>
@@ -45,6 +46,18 @@
         <h3>جدول الأقساط الشهرية</h3>
         <div id="monthsContainer" style="margin-top: 12px;"></div>
     </section>
+
+    <!-- دالة تنسيق الأرقام بالفواصل اللحظية المستدعاة في الحقول النصية للمبالغ -->
+    <script>
+        function formatCurrencyInput(input) {
+            let value = input.value.replace(/,/g, '');
+            if (!isNaN(value) && value !== '') {
+                input.value = parseFloat(value).toLocaleString('en-US');
+            } else {
+                input.value = '';
+            }
+        }
+    </script>
 
     <script type="module">
         import { db, ref, get, ROOT_NODE } from "./js/firebase.js";
@@ -60,7 +73,13 @@
 
             const c = snapshot.val();
             document.getElementById('cName').innerText = c.name;
-            document.getElementById('cInfo').innerText = `هاتف: ${c.phone} | الجهاز: ${c.device} (${c.color}) | IMEI: ${c.imei}`;
+            
+            // قراءة ذكية وآمنة للبيانات لمنع توقف الكود وضمان استقرار قراءة السجلات القديمة والجديدة
+            let infoText = `هاتف: ${c.phone} | الجهاز: ${c.device}`;
+            if (c.color) infoText += ` (${c.color})`;
+            if (c.imei) infoText += ` | IMEI: ${c.imei}`;
+            document.getElementById('cInfo').innerText = infoText;
+
             document.getElementById('cTotal').innerText = Number(c.totalPrice).toLocaleString() + ' د.ع';
             
             const totalPaid = Number(c.totalPrice) - Number(c.remaining);
@@ -70,37 +89,43 @@
             const container = document.getElementById('monthsContainer');
             container.innerHTML = '';
 
-            c.months.forEach((m, idx) => {
-                const monthCard = document.createElement('div');
-                monthCard.className = 'card';
-                monthCard.style.borderRight = `6px solid ${m.status === 'Paid' ? 'var(--status-paid)' : (m.status === 'Partial' ? 'var(--status-partial)' : 'var(--status-unpaid)')}`;
-                
-                monthCard.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <strong>الشهر ${m.monthNumber} (استحقاق: ${m.dueDate})</strong>
-                        <span class="badge badge-${m.status.toLowerCase()}">${m.status === 'Paid' ? 'مكتمل' : (m.status === 'Partial' ? 'جزئي' : 'غير مدفوع')}</span>
-                    </div>
-                    <div style="margin-top: 8px; color: var(--text-secondary); font-size: 0.9rem;">
-                        المطلوب: ${Number(m.required).toLocaleString()} | المدفوع: ${Number(m.paid).toLocaleString()} | المتبقي: ${Number(m.remaining).toLocaleString()}
-                    </div>
-                    ${m.status !== 'Paid' ? `
-                        <div style="display: flex; gap: 8px; margin-top: 10px;">
-                            <input type="number" id="payInput_${idx}" placeholder="مبلغ الدفع اليدوي" style="margin:0;">
-                            <button class="pay-manual-btn" data-idx="${idx}" style="width: 120px;">دفع يدوي</button>
+            if (c.months) {
+                c.months.forEach((m, idx) => {
+                    const monthCard = document.createElement('div');
+                    monthCard.className = 'card';
+                    monthCard.style.borderRight = `6px solid ${m.status === 'Paid' ? 'var(--status-paid)' : (m.status === 'Partial' ? 'var(--status-partial)' : 'var(--status-unpaid)')}`;
+                    
+                    monthCard.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong>الشهر ${m.monthNumber} (استحقاق: ${m.dueDate})</strong>
+                            <span class="badge badge-${m.status.toLowerCase()}">${m.status === 'Paid' ? 'مكتمل' : (m.status === 'Partial' ? 'جزئي' : 'غير مدفوع')}</span>
                         </div>
-                    ` : ''}
-                `;
-                container.appendChild(monthCard);
-            });
+                        <div style="margin-top: 8px; color: var(--text-secondary); font-size: 0.9rem;">
+                            المطلوب: ${Number(m.required).toLocaleString()} | المدفوع: ${Number(m.paid).toLocaleString()} | المتبقي: ${Number(m.remaining).toLocaleString()}
+                        </div>
+                        ${m.status !== 'Paid' ? `
+                            <div style="display: flex; gap: 8px; margin-top: 10px;">
+                                <input type="text" id="payInput_${idx}" placeholder="مبلغ الدفع اليدوي" style="margin:0;" oninput="formatCurrencyInput(this)">
+                                <button class="pay-manual-btn" data-idx="${idx}" style="width: 120px;">دفع يدوي</button>
+                            </div>
+                        ` : ''}
+                    `;
+                    container.appendChild(monthCard);
+                });
+            }
 
-            // ربط أزرار الدفع اليدوي
+            // ربط أزرار الدفع اليدوي بعد تصفية وتجريد فواصل الآلاف
             document.querySelectorAll('.pay-manual-btn').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
                     const idx = e.target.getAttribute('data-idx');
-                    const amount = document.getElementById(`payInput_${idx}`).value;
-                    if (!amount) return alert('أدخل المبلغ');
+                    const inputEl = document.getElementById(`payInput_${idx}`);
+                    if (!inputEl || !inputEl.value) return alert('أدخل المبلغ');
                     
-                    const res = await processManualPayment(customerId, Number(idx), amount);
+                    // تنظيف النص وتجريده من الفواصل وتحويله لرقم نقي
+                    const rawAmount = Number(inputEl.value.replace(/,/g, ''));
+                    if (isNaN(rawAmount) || rawAmount <= 0) return alert('الرجاء إدخال مبلغ صحيح');
+                    
+                    const res = await processManualPayment(customerId, Number(idx), rawAmount);
                     if (res.success) {
                         alert('تم تسجيل الدفعة بنجاح');
                         window.location.href = `receipt.html?id=${customerId}&rec=${res.receipt.receiptNumber}`;
@@ -111,10 +136,16 @@
             });
         }
 
+        // معالجة استمارة الدفع التلقائي وتطهير المبالغ من الفواصل قبل المعالجة الحسابية
         document.getElementById('autoPaymentForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const amount = document.getElementById('autoPayAmount').value;
-            const res = await processAutoPayment(customerId, amount);
+            const inputEl = document.getElementById('autoPayAmount');
+            if (!inputEl || !inputEl.value) return;
+
+            const rawAmount = Number(inputEl.value.replace(/,/g, ''));
+            if (isNaN(rawAmount) || rawAmount <= 0) return alert('الرجاء إدخال مبلغ صحيح');
+
+            const res = await processAutoPayment(customerId, rawAmount);
             if (res.success) {
                 alert('تم التسديد التلقائي بنجاح');
                 window.location.href = `receipt.html?id=${customerId}&rec=${res.receipt.receiptNumber}`;
