@@ -12,11 +12,7 @@ if (themeBtn) {
     });
 }
 
-// ضبط تاريخ اليوم تلقائياً
-const purchaseDateInput = document.getElementById('custPurchaseDate');
-if (purchaseDateInput) {
-    purchaseDateInput.valueAsDate = new Date();
-}
+// [ملاحظة: تم حذف حقل تعيين التاريخ اليدوي القديم نهائياً من هنا]
 
 export async function loadDashboard() {
     const snap = await get(ref(db, `${ROOT_NODE}/customers`));
@@ -54,11 +50,11 @@ export async function loadDashboard() {
         }
         if (isOverdue) overdueCount++;
 
+        // تحديث الفلترة المعتمدة لتعتمد على الاسم ورقم الهاتف فقط
         const matchesName = (c.name || '').toLowerCase().includes(searchKeyword);
         const matchesPhone = (c.phone || '').includes(searchKeyword);
-        const matchesImei = (c.imei || '').includes(searchKeyword);
 
-        if (matchesName || matchesPhone || matchesImei) {
+        if (matchesName || matchesPhone) {
             const card = document.createElement('div');
             card.className = 'card';
             card.style.cursor = 'pointer';
@@ -66,13 +62,15 @@ export async function loadDashboard() {
                 window.location.href = `customer.html?id=${c.customerId}`;
             });
             
+            // تم الحفاظ على هيكلية الكارد وعرض اللون والبيانات القديمة بأمان إن وجدت
+            const deviceColorInfo = c.color ? ` (${c.color})` : '';
             card.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <strong>${c.name}</strong>
                     <span style="color: var(--accent-color); font-weight:600;">${c.phone}</span>
                 </div>
                 <div style="margin-top:6px; color: var(--text-secondary); font-size:0.88rem;">
-                    الجهاز: ${c.device} (${c.color}) | Mتبقي: <strong style="color: var(--status-unpaid);">${Number(c.remaining).toLocaleString()} د.ع</strong>
+                    الجهاز: ${c.device}${deviceColorInfo} | المتبقي: <strong style="color: var(--status-unpaid);">${Number(c.remaining).toLocaleString()} د.ع</strong>
                 </div>
             `;
             listContainer.appendChild(card);
@@ -90,25 +88,34 @@ const addForm = document.getElementById('addCustomerForm');
 if (addForm) {
     addForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        // دالة مساعدة داخلية لتنظيف فواصل الآلاف من الحقول النصية وتحويلها لأرقام نقية
+        const parseCurrencyValue = (id) => {
+            const el = document.getElementById(id);
+            if (!el) return 0;
+            return parseFloat(el.value.replace(/,/g, '')) || 0;
+        };
+
+        // توليد تاريخ اليوم والساعة بالاعتماد على الجهاز والإنترنت أوتوماتيكياً
+        const autoPurchaseDate = new Date().toISOString().split('T')[0];
+
+        // بناء كائن الداتا النظيف والمطابق للـ HTML الجديد بدون حقول زائدة وبأرقام صحيحة
         const data = {
-            name: document.getElementById('custName').value,
-            phone: document.getElementById('custPhone').value,
-            device: document.getElementById('custDevice').value,
-            imei: document.getElementById('custImei').value,
-            color: document.getElementById('custColor').value,
-            totalPrice: document.getElementById('custTotalPrice').value,
-            downPayment: document.getElementById('custDownPayment').value,
-            monthlyInstallment: document.getElementById('custMonthly').value,
-            fixedPayDay: document.getElementById('custPayDay').value,
-            purchaseDate: document.getElementById('custPurchaseDate').value,
-            notes: document.getElementById('custNotes').value,
+            name: document.getElementById('custName').value.trim(),
+            phone: document.getElementById('custPhone').value.trim(),
+            device: document.getElementById('custDevice').value.trim(),
+            totalPrice: parseCurrencyValue('custTotalPrice'),
+            downPayment: parseCurrencyValue('custDownPayment'),
+            monthlyInstallment: parseCurrencyValue('custMonthly'),
+            fixedPayDay: parseInt(document.getElementById('custPayDay').value),
+            purchaseDate: autoPurchaseDate,
+            notes: document.getElementById('custNotes').value.trim(),
         };
 
         const res = await addCustomer(data);
         if (res.success) {
             alert('تمت إضافة الزبون بنجاح!');
             addForm.reset();
-            if (purchaseDateInput) purchaseDateInput.valueAsDate = new Date();
             loadDashboard();
         } else {
             alert(res.message);
