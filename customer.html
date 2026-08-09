@@ -3,51 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تفاصيل الزبون - AlRashed Smart V2</title>
+    <title>الملف الشخصي للزبون - AlRashed Smart V2</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* تحسينات بصرية مخصصة لصفحة الزبون لجعلها كالبرامج الحديثة */
+        .profile-header {
+            text-align: center;
+            padding: 24px;
+            background: var(--card-bg);
+            border-bottom: 3px solid var(--accent-color);
+            margin-bottom: 20px;
+        }
+        .profile-name {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--text-main);
+            margin-bottom: 10px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .info-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 14px;
+            border-radius: 8px;
+            border-right: 4px solid var(--accent-color);
+        }
+        .info-card min-title {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            display: block;
+            margin-bottom: 4px;
+        }
+        .info-card value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        .delete-section {
+            margin-top: 20px;
+            text-align: left;
+        }
+        .btn-danger {
+            background-color: var(--status-unpaid);
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .btn-danger.confirm {
+            background-color: #d97706;
+        }
+    </style>
 </head>
 <body>
 
     <header class="card" style="display: flex; justify-content: space-between; align-items: center;">
         <a href="index.html" style="color: var(--accent-color); text-decoration: none; font-weight: bold;">← العودة للرئيسية</a>
-        <h2>تفاصيل الزبون</h2>
+        <h2 style="font-size: 1.1rem; margin: 0;">الملف الشخصي للزبون</h2>
     </header>
 
-    <section class="card" id="customerDetails">
-        <h3 id="cName">جاري التحميل...</h3>
-        <p id="cInfo" style="color: var(--text-secondary); margin-top: 6px; font-size: 0.9rem;"></p>
-        
-        <div class="grid-stats" style="margin-top: 14px;">
-            <div class="stat-item">
-                <div>إجمالي المبلغ</div>
-                <div class="stat-value" id="cTotal">0</div>
+    <!-- رأس الصفحة: يعرض اسم الزبون بشكل ضخم وواضح -->
+    <section class="card profile-header">
+        <div class="profile-name" id="cName">جاري التحميل...</div>
+        <div id="cStatusBadge"></div>
+    </section>
+
+    <!-- كارت بيانات الزبون مقسمة على شكل بطاقات منفصلة للفرز السريع -->
+    <section class="card">
+        <h3>بيانات الاتصال والجهاز</h3>
+        <div class="info-grid" id="infoGridContainer">
+            <div class="info-card">
+                <span style="font-size: 0.85rem; color: var(--text-secondary); display: block;">رقم الهاتف</span>
+                <span id="cPhone" style="font-size: 1.2rem; font-weight: bold; color: var(--accent-color);">078xxxxxxx</span>
             </div>
-            <div class="stat-item">
-                <div>المدفوع</div>
-                <div class="stat-value" id="cPaid" style="color: var(--status-paid);">0</div>
+            <div class="info-card">
+                <span style="font-size: 0.85rem; color: var(--text-secondary); display: block;">نوع الجهاز</span>
+                <span id="cDevice" style="font-size: 1.1rem; font-weight: 600;">-</span>
             </div>
-            <div class="stat-item">
-                <div>المتبقي</div>
-                <div class="stat-value" id="cRemaining" style="color: var(--status-unpaid);">0</div>
+            <div class="info-card" id="legacyDataCard" style="display: none;">
+                <span style="font-size: 0.85rem; color: var(--text-secondary); display: block;">البيانات الإضافية (القديمة)</span>
+                <span id="cLegacyDetails" style="font-size: 0.95rem;">-</span>
+            </div>
+            <div class="info-card" style="grid-column: 1 / -1;">
+                <span style="font-size: 0.85rem; color: var(--text-secondary); display: block;">الملاحظات</span>
+                <span id="cNotes" style="font-size: 0.95rem; font-style: italic;">لا توجد ملاحظات</span>
             </div>
         </div>
     </section>
 
+    <!-- الموقف المالي -->
+    <section class="card">
+        <h3>الحالة المالية الإجمالية</h3>
+        <div class="grid-stats" style="margin-top: 14px;">
+            <div class="stat-item">
+                <div>إجمالي السعر</div>
+                <div class="stat-value" id="cTotal">0 د.ع</div>
+            </div>
+            <div class="stat-item">
+                <div>الواصل الكلي</div>
+                <div class="stat-value" id="cPaid" style="color: var(--status-paid);">0 د.ع</div>
+            </div>
+            <div class="stat-item">
+                <div>المتبقي بذمته</div>
+                <div class="stat-value" id="cRemaining" style="color: var(--status-unpaid);">0 د.ع</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- التسديد التلقائي -->
     <section class="card">
         <h3>تسديد دفع تلقائي (تسلسلي)</h3>
         <form id="autoPaymentForm" style="display: flex; gap: 8px; margin-top: 10px;">
-            <!-- تم تحويل النوع إلى text لتفعيل الفواصل اللحظية بالتوافق مع العملة العراقية -->
             <input type="text" id="autoPayAmount" placeholder="أدخل مبلغ التسديد التلقائي" required style="margin: 0;" oninput="formatCurrencyInput(this)">
             <button type="submit" style="width: 140px; shrink: 0;">تسديد تلقائي</button>
         </form>
     </section>
 
+    <!-- جدول الأقساط -->
     <section class="card">
         <h3>جدول الأقساط الشهرية</h3>
         <div id="monthsContainer" style="margin-top: 12px;"></div>
     </section>
 
-    <!-- دالة تنسيق الأرقام بالفواصل اللحظية المستدعاة في الحقول النصية للمبالغ -->
+    <!-- قسم الإجراءات الإدارية: يحتوي على زر الحذف ذو الضغطتين -->
+    <section class="card" style="border-top: 2px solid rgba(239, 68, 68, 0.2);">
+        <h3>إجراءات إدارية</h3>
+        <div class="delete-section">
+            <button id="deleteCustomerBtn" class="btn-danger">حذف حساب الزبون نهائياً</button>
+        </div>
+    </section>
+
     <script>
         function formatCurrencyInput(input) {
             let value = input.value.replace(/,/g, '');
@@ -60,11 +152,12 @@
     </script>
 
     <script type="module">
-        import { db, ref, get, ROOT_NODE } from "./js/firebase.js";
+        import { db, ref, get, remove, ROOT_NODE } from "./js/firebase.js";
         import { processManualPayment, processAutoPayment } from "./js/payments.js";
 
         const urlParams = new URLSearchParams(window.location.search);
         const customerId = urlParams.get('id');
+        let deleteStage = 0; // مرحلة الحذف الذكي (0: الحذف العادي، 1: تأكيد الحذف)
 
         async function loadCustomer() {
             if (!customerId) return;
@@ -72,19 +165,36 @@
             if (!snapshot.exists()) return alert('الزبون غير موجود');
 
             const c = snapshot.val();
-            document.getElementById('cName').innerText = c.name;
             
-            // قراءة ذكية وآمنة للبيانات لمنع توقف الكود وضمان استقرار قراءة السجلات القديمة والجديدة
-            let infoText = `هاتف: ${c.phone} | الجهاز: ${c.device}`;
-            if (c.color) infoText += ` (${c.color})`;
-            if (c.imei) infoText += ` | IMEI: ${c.imei}`;
-            document.getElementById('cInfo').innerText = infoText;
+            // تخصيص البيانات في التصميم الجديد
+            document.getElementById('cName').innerText = c.name;
+            document.getElementById('cPhone').innerText = c.phone;
+            document.getElementById('cDevice').innerText = c.device;
+            document.getElementById('cNotes').innerText = c.notes ? c.notes : "لا توجد ملاحظات مكتوبة.";
+            
+            // إظهار وإخفاء حقول IMEI واللون للزبائن القدامى تلقائياً دون تخريب الواجهة
+            if (c.color || c.imei) {
+                const legacyCard = document.getElementById('legacyDataCard');
+                legacyCard.style.display = "block";
+                let legacyText = "";
+                if (c.color) legacyText += `اللون: ${c.color}`;
+                if (c.imei) legacyText += legacyText ? ` | IMEI: ${c.imei}` : `IMEI: ${c.imei}`;
+                document.getElementById('cLegacyDetails').innerText = legacyText;
+            }
 
             document.getElementById('cTotal').innerText = Number(c.totalPrice).toLocaleString() + ' د.ع';
             
             const totalPaid = Number(c.totalPrice) - Number(c.remaining);
             document.getElementById('cPaid').innerText = totalPaid.toLocaleString() + ' د.ع';
             document.getElementById('cRemaining').innerText = Number(c.remaining).toLocaleString() + ' د.ع';
+
+            // شارة الحالة العامة للزبون
+            const statusBadge = document.getElementById('cStatusBadge');
+            if(Number(c.remaining) <= 0) {
+                statusBadge.innerHTML = `<span class="badge badge-paid" style="padding: 6px 16px; font-size: 0.9rem;">خالص ماليًا</span>`;
+            } else {
+                statusBadge.innerHTML = `<span class="badge badge-unpaid" style="padding: 6px 16px; font-size: 0.9rem;">مطلوب أقساط</span>`;
+            }
 
             const container = document.getElementById('monthsContainer');
             container.innerHTML = '';
@@ -114,14 +224,13 @@
                 });
             }
 
-            // ربط أزرار الدفع اليدوي بعد تصفية وتجريد فواصل الآلاف
+            // ربط أزرار الدفع اليدوي
             document.querySelectorAll('.pay-manual-btn').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
                     const idx = e.target.getAttribute('data-idx');
                     const inputEl = document.getElementById(`payInput_${idx}`);
                     if (!inputEl || !inputEl.value) return alert('أدخل المبلغ');
                     
-                    // تنظيف النص وتجريده من الفواصل وتحويله لرقم نقي
                     const rawAmount = Number(inputEl.value.replace(/,/g, ''));
                     if (isNaN(rawAmount) || rawAmount <= 0) return alert('الرجاء إدخال مبلغ صحيح');
                     
@@ -136,7 +245,7 @@
             });
         }
 
-        // معالجة استمارة الدفع التلقائي وتطهير المبالغ من الفواصل قبل المعالجة الحسابية
+        // معالجة الدفع التلقائي
         document.getElementById('autoPaymentForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const inputEl = document.getElementById('autoPayAmount');
@@ -154,7 +263,35 @@
             }
         });
 
+        // تفعيل زر الحذف بـ (دوستين) لحماية البيانات من الحذف المفاجئ
+        const deleteBtn = document.getElementById('deleteCustomerBtn');
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', async () => {
+                if (deleteStage === 0) {
+                    deleteStage = 1;
+                    deleteBtn.innerText = "هل أنت متأكد فعلاً؟ اضغط مرة أخرى للتأكيد النهائي";
+                    deleteBtn.classList.add('confirm');
+                    
+                    // إعادة ضبط الزر تلقائياً إذا مر 5 ثوانٍ ولم يضغط الضغطة الثانية
+                    setTimeout(() => {
+                        deleteStage = 0;
+                        deleteBtn.innerText = "حذف حساب الزبون نهائياً";
+                        deleteBtn.classList.remove('confirm');
+                    }, 5000);
+                } else if (deleteStage === 1) {
+                    try {
+                        await remove(ref(db, `${ROOT_NODE}/customers/${customerId}`));
+                        alert('تم حذف حساب الزبون وكافة سجلاته بنجاح.');
+                        window.location.href = 'index.html';
+                    } catch (error) {
+                        alert('حدث خطأ أثناء محاولة الحذف: ' + error.message);
+                    }
+                }
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', loadCustomer);
     </script>
 </body>
 </html>
+
