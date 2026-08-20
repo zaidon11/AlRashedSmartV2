@@ -409,7 +409,7 @@
             </div>
             <div style="text-align:left; font-size:10px; color:#64748b; font-weight:700;">
                 <div>تاريخ التقرير</div>
-                <b style="color:#0f172a; font-size:11px;" id="repPrintDate">2026/08/12</b>
+                <b style="color:#0f172a; font-size:11px;" id="repPrintDate">2026/08/20</b>
             </div>
         </div>
 
@@ -547,6 +547,11 @@
     let activeFilter = 'all';
     let targetMonthIndexForPay = null;
 
+    // دالة لتظيف الكائنات الحاوية لمنع قيم undefined مع الفايربيس
+    function sanitizeForFirebase(obj) {
+        return JSON.parse(JSON.stringify(obj, (key, value) => value === undefined ? "" : value));
+    }
+
     // ==================== المزامنة الفورية مع السحابة ====================
     customersRef.on('value', (snapshot) => {
         allCustomers = snapshot.val() || {};
@@ -561,13 +566,19 @@
     });
 
     function saveCustomerToCloud(id, customerData) {
-        customersRef.child(id).set(customerData, (error) => {
-            if (error) {
-                showToast("فشل الحفظ في الفايربيس، تحقق من قواعد البيانات Rules");
-            } else {
-                showToast("تم الحفظ في الفايربيس بنجاح ☁️");
-            }
-        });
+        try {
+            const cleanData = sanitizeForFirebase(customerData);
+            customersRef.child(id).set(cleanData, (error) => {
+                if (error) {
+                    showToast("فشل الحفظ في الفايربيس، تأكد من إعدادات Rules");
+                } else {
+                    showToast("تم الحفظ في الفايربيس بنجاح ☁️");
+                }
+            });
+        } catch (e) {
+            console.error(e);
+            showToast("حدث خطأ أثناء إرسال البيانات للفايربيس");
+        }
     }
 
     function removeCustomerFromCloud(id) {
@@ -768,62 +779,67 @@
     }
 
     function addCustomer() {
-        const name = document.getElementById('custName').value.trim();
-        const phone = document.getElementById('custPhone').value.trim() || "";
-        const model = document.getElementById('phoneModel').value.trim() || "";
+        try {
+            const name = document.getElementById('custName').value.trim();
+            const phone = document.getElementById('custPhone').value.trim() || "";
+            const model = document.getElementById('phoneModel').value.trim() || "";
 
-        const cashPrice = parseMoneyValue(document.getElementById('cashPrice').value);
-        const profitPrice = parseMoneyValue(document.getElementById('profitPrice').value);
-        const total = cashPrice + profitPrice;
+            const cashPrice = parseMoneyValue(document.getElementById('cashPrice').value);
+            const profitPrice = parseMoneyValue(document.getElementById('profitPrice').value);
+            const total = cashPrice + profitPrice;
 
-        const first = parseMoneyValue(document.getElementById('firstPay').value) || 0;
-        const fixedDay = parseInt(document.getElementById('fixedDayInput').value) || 10;
-        const monthlyAmount = parseMoneyValue(document.getElementById('monthlyAmountInput').value);
+            const first = parseMoneyValue(document.getElementById('firstPay').value) || 0;
+            const fixedDay = parseInt(document.getElementById('fixedDayInput').value) || 10;
+            const monthlyAmount = parseMoneyValue(document.getElementById('monthlyAmountInput').value);
 
-        const netRemaining = total - first;
-        const totalMonthsCount = Math.ceil(netRemaining / monthlyAmount);
-        let monthsArray = [];
-        let runningDebt = netRemaining;
+            const netRemaining = total - first;
+            const totalMonthsCount = Math.ceil(netRemaining / monthlyAmount);
+            let monthsArray = [];
+            let runningDebt = netRemaining;
 
-        let baseMonthOffset = 0;
-        if (first > 0) {
-            baseMonthOffset = 1;
+            let baseMonthOffset = 0;
+            if (first > 0) {
+                baseMonthOffset = 1;
+            }
+
+            for (let i = 1; i <= totalMonthsCount; i++) {
+                let currentRequired = Math.min(monthlyAmount, runningDebt);
+                monthsArray.push({
+                    monthNumber: i,
+                    dueDate: calculateMonthDueDate(fixedDay, i, baseMonthOffset),
+                    required: currentRequired,
+                    remaining: currentRequired,
+                    status: "Unpaid",
+                    payments: []
+                });
+                runningDebt -= currentRequired;
+            }
+
+            const newId = 'cust_' + Date.now();
+            const newCustomer = {
+                name: name,
+                phone: phone,
+                model: model,
+                cashPrice: cashPrice,
+                profitPrice: profitPrice,
+                total: total,
+                firstPay: first,
+                fixedDay: fixedDay,
+                monthlyAmount: monthlyAmount,
+                purchaseDate: new Date().toLocaleDateString('en-CA'),
+                months: monthsArray
+            };
+
+            saveCustomerToCloud(newId, newCustomer);
+            addLog(name, "إضافة عقد", `عقد جديد بمبلغ ${formatNum(total)} د.ع`);
+            
+            document.querySelectorAll('.grid-form input').forEach(i => i.value = '');
+            document.getElementById('fixedDayInput').value = 10;
+            validateForm();
+        } catch (err) {
+            console.error("خطأ إضافة زبون:", err);
+            showToast("حدث خطأ أثناء معالجة بيانات الزبون");
         }
-
-        for (let i = 1; i <= totalMonthsCount; i++) {
-            let currentRequired = Math.min(monthlyAmount, runningDebt);
-            monthsArray.push({
-                monthNumber: i,
-                dueDate: calculateMonthDueDate(fixedDay, i, baseMonthOffset),
-                required: currentRequired,
-                remaining: currentRequired,
-                status: "Unpaid",
-                payments: false // استبدال المصفوفة الفارغة بـ false لتجنب الفايربيس undefined
-            });
-            runningDebt -= currentRequired;
-        }
-
-        const newId = 'cust_' + Date.now();
-        const newCustomer = {
-            name: name,
-            phone: phone,
-            model: model,
-            cashPrice: cashPrice,
-            profitPrice: profitPrice,
-            total: total,
-            firstPay: first,
-            fixedDay: fixedDay,
-            monthlyAmount: monthlyAmount,
-            purchaseDate: new Date().toLocaleDateString('en-CA'),
-            months: monthsArray
-        };
-
-        saveCustomerToCloud(newId, newCustomer);
-        addLog(name, "إضافة عقد", `عقد جديد بمبلغ ${formatNum(total)} د.ع`);
-        
-        document.querySelectorAll('.grid-form input').forEach(i => i.value = '');
-        document.getElementById('fixedDayInput').value = 10;
-        validateForm();
     }
 
     function showCustomer(id) {
