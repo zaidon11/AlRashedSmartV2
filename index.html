@@ -4,42 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>مركز الراشد - نظام إدارة الأقساط المتكامل</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-    <!-- Firebase SDK v9 (Modular Script CDN) -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
-
-        // إعدادات الفايربيس الخاصة بمشروعك
-        const firebaseConfig = {
-            apiKey: "AIzaSyC6nz1_dENnayngLi1iiq8KDOKQmbfwNDI",
-            authDomain: "rashedshopv1.firebaseapp.com",
-            projectId: "rashedshopv1",
-            storageBucket: "rashedshopv1.firebasestorage.app",
-            messagingSenderId: "946603870783",
-            appId: "1:946603870783:web:59aaa8549fab98635fc68a",
-            measurementId: "G-CKF2TS086Q",
-            databaseURL: "https://rashedshopv1-default-rtdb.firebaseio.com"
-        };
-
-        // تهيئة الفايربيس
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-
-        // ربط الفايربيس بالنافذة العامة لتسهيل الوصول المباشر
-        window.fbDatabase = db;
-        window.fbRef = ref;
-        window.fbSet = set;
-        window.fbOnValue = onValue;
-
-        // بدء المزامنة فور اكتمال تحميل الفايربيس
-        if (window.initFirebaseSync) {
-            window.initFirebaseSync();
-        }
-    </script>
+    <!-- Firebase SDK (Modular Architecture v9/v10 Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
     <style>
         :root {
@@ -100,19 +70,7 @@
             gap: 10px;
         }
 
-        .btn-header-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-
-        .sync-status {
-            font-size: 11px;
-            padding: 6px 10px;
-            border-radius: 8px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .sync-online { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
-        .sync-connecting { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .btn-header-group { display: flex; gap: 8px; flex-wrap: wrap; }
 
         .btn-action-top {
             background: var(--card-inner);
@@ -266,7 +224,6 @@
 
         .theme-toggle-btn { position: fixed; bottom: 20px; left: 20px; width: 45px; height: 45px; border-radius: 50%; background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-main); display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; box-shadow: 0 4px 15px var(--shadow); z-index: 9000; }
 
-        /* معاينة تقرير A4 */
         .report-preview-overlay {
             display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(15, 23, 42, 0.95); z-index: 10000;
@@ -336,11 +293,10 @@
     <div id="mainView">
         <header>
             <div>
-                <h2 style="margin:0; font-size: 18px;">مركز الراشد - نظام إدارة الأقساط 📱</h2>
-                <span style="font-size:11px; color: var(--text-muted);">إدارة العقود والمبيعات - مزامنة سحابية + محلي</span>
+                <h2 style="margin:0; font-size: 18px;">مركز الراشد - نظام الأقساط الذكي 📱</h2>
+                <span style="font-size:11px; color: var(--text-muted);">إدارة العقود والمبيعات المحلية</span>
             </div>
             <div class="btn-header-group">
-                <div class="sync-status sync-connecting" id="syncBadge">⚡ جاري ربط الفايربيس...</div>
                 <button class="btn-action-top" onclick="openCalculatorModal()">🧮 حاسبة سريعة</button>
                 <button class="btn-action-top" onclick="openGeneralLogModal()">📋 السجل والنسخ الاحتياطي</button>
             </div>
@@ -453,7 +409,7 @@
             </div>
             <div style="text-align:left; font-size:10px; color:#64748b; font-weight:700;">
                 <div>تاريخ التقرير</div>
-                <b style="color:#0f172a; font-size:11px;" id="repPrintDate">2026/08/20</b>
+                <b style="color:#0f172a; font-size:11px;" id="repPrintDate">2026/08/12</b>
             </div>
         </div>
 
@@ -500,16 +456,16 @@
     </div>
 
     <div class="report-actions-bottom">
-        <button class="btn-report-act" onclick="shareReportImage()"><span style="color:#3b82f6; font-size:18px;">🔗</span>مشاركة</button>
-        <button class="btn-report-act" onclick="printReportPaper()"><span style="color:#ec4899; font-size:18px;">🖨️</span>طباعة</button>
-        <button class="btn-report-act" onclick="downloadWhatsAppPDF()"><span style="color:#10b981; font-size:18px;">📄</span>واتساب PDF</button>
-        <button class="btn-report-act" onclick="downloadWhatsAppImage()"><span style="color:#06b6d4; font-size:18px;">🖼️</span>واتساب صورة</button>
+        <button class="btn-report-act" onclick="shareReport()"><span style="color:#3b82f6; font-size:18px;">🔗</span>مشاركة</button>
+        <button class="btn-report-act" onclick="window.print()"><span style="color:#ec4899; font-size:18px;">🖨️</span>طباعة</button>
+        <button class="btn-report-act" onclick="sendWhatsAppPDF()"><span style="color:#10b981; font-size:18px;">📄</span>واتساب PDF</button>
+        <button class="btn-report-act" onclick="sendWhatsAppImage()"><span style="color:#06b6d4; font-size:18px;">🖼️</span>واتساب صورة</button>
     </div>
 </div>
 
 <div class="modal-overlay" id="singlePayModal">
     <div class="modal-content">
-        <h3 style="margin-top:0;" id="singlePayTitle">تسديد دفعة</h3>
+        <h3 style="margin-top:0;" id="singlePayTitle">تسجيل دفعة</h3>
         <p style="font-size:12px; color:var(--text-muted);" id="singlePaySubTitle">المتبقي: 0</p>
         <input type="text" inputmode="numeric" id="singlePayInput" placeholder="أدخل المبلغ" oninput="formatInputWithCommas(this)" style="margin-bottom:12px;">
         <button class="btn-main" style="width:100%;" onclick="confirmSinglePayment()">تأكيد الدفع 💳</button>
@@ -569,431 +525,443 @@
 </div>
 
 <script>
-    let allCustomers = JSON.parse(localStorage.getItem('alrashed_customers_data')) || {};
-    let appLogs = JSON.parse(localStorage.getItem('alrashed_app_logs')) || [];
+    // ==================== إعدادات الفايربيس (Firebase Realtime Database) ====================
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+        databaseURL: "https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT_ID.appspot.com",
+        messagingSenderId: "YOUR_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const customersRef = db.ref('installments/customers');
+    const logsRef = db.ref('installments/logs');
+
+    let allCustomers = {};
+    let appLogs = [];
     let currentId = null;
     let activeFilter = 'all';
     let targetMonthIndexForPay = null;
 
-    // المزامنة بين الحاسبة والسيرفر الفايربيس
-    function saveState() {
-        localStorage.setItem('alrashed_customers_data', JSON.stringify(allCustomers));
-        localStorage.setItem('alrashed_app_logs', JSON.stringify(appLogs));
+    // ==================== المزامنة الفورية السحابية بدلاً من LocalStorage ====================
+    customersRef.on('value', (snapshot) => {
+        allCustomers = snapshot.val() || {};
+        loadData();
+    });
 
-        if (window.fbDatabase) {
-            try {
-                window.fbSet(window.fbRef(window.fbDatabase, 'alrashed_app_data'), {
-                    customers: allCustomers,
-                    logs: appLogs
-                });
-            } catch (e) {
-                console.error("Firebase sync error:", e);
-            }
-        }
+    logsRef.on('value', (snapshot) => {
+        const data = snapshot.val() || {};
+        appLogs = Object.values(data).sort((a, b) => b.timestamp - a.timestamp);
+    });
+
+    function saveCustomerToCloud(id, customerData) {
+        customersRef.child(id).set(customerData);
     }
 
-    // الاستماع للبيانات من الفايربيس عند فتح التطبيق
-    window.initFirebaseSync = function() {
-        const badge = document.getElementById('syncBadge');
-        const dbRef = window.fbRef(window.fbDatabase, 'alrashed_app_data');
-        
-        window.fbOnValue(dbRef, (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                if (data.customers) allCustomers = data.customers;
-                if (data.logs) appLogs = data.logs;
-                localStorage.setItem('alrashed_customers_data', JSON.stringify(allCustomers));
-                localStorage.setItem('alrashed_app_logs', JSON.stringify(appLogs));
-                renderTable();
-                if (currentId) viewCustomer(currentId);
-            }
-            if (badge) {
-                badge.className = 'sync-status sync-online';
-                badge.innerText = '☁️ متصل ومزامن سحابياً';
-            }
-        }, (error) => {
-            if (badge) {
-                badge.className = 'sync-status sync-connecting';
-                badge.innerText = '💻 وضع محلي (الحاسبة)';
-            }
+    function removeCustomerFromCloud(id) {
+        customersRef.child(id).remove();
+    }
+
+    function toggleTheme() {
+        const current = document.body.getAttribute('data-theme');
+        const next = current === 'light' ? 'dark' : 'light';
+        document.body.setAttribute('data-theme', next);
+        localStorage.setItem('theme_pref', next);
+    }
+    if(localStorage.getItem('theme_pref') === 'light') document.body.setAttribute('data-theme', 'light');
+
+    function formatNum(val) {
+        if (val === undefined || val === null || isNaN(val)) return '0';
+        return Number(val).toLocaleString('en-US');
+    }
+
+    function addLog(customerName, actionType, details) {
+        const now = new Date();
+        const newLogRef = logsRef.push();
+        newLogRef.set({
+            id: newLogRef.key,
+            timestamp: Date.now(),
+            dateStr: now.toLocaleDateString('ar-IQ'),
+            timeStr: now.toLocaleTimeString('ar-IQ', { hour: '2-digit', minute: '2-digit' }),
+            customerName: customerName || 'عام',
+            actionType: actionType,
+            details: details
         });
-    };
-
-    function addLog(text) {
-        const logItem = { time: new Date().toLocaleString('ar-IQ'), text: text };
-        appLogs.unshift(logItem);
-        saveState();
-    }
-
-    function parseNum(val) {
-        if (!val) return 0;
-        return parseFloat(val.toString().replace(/,/g, '')) || 0;
-    }
-
-    function formatNum(num) {
-        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
 
     function formatInputWithCommas(input) {
-        let val = input.value.replace(/,/g, '');
-        if (!isNaN(val) && val !== '') {
-            input.value = formatNum(val);
-        }
+        let value = input.value.replace(/,/g, '');
+        if (!isNaN(value) && value !== '') input.value = Number(value).toLocaleString('en-US');
+    }
+
+    function parseMoneyValue(valStr) {
+        if (!valStr) return 0;
+        return parseFloat(valStr.toString().replace(/,/g, '')) || 0;
+    }
+
+    function autoCalcTotal() {
+        const cash = parseMoneyValue(document.getElementById('cashPrice').value);
+        const profit = parseMoneyValue(document.getElementById('profitPrice').value);
+        const total = cash + profit;
+        document.getElementById('totalPrice').value = total > 0 ? total.toLocaleString('en-US') : '';
+    }
+
+    function validateForm() {
+        const name = document.getElementById('custName').value.trim();
+        const cash = parseMoneyValue(document.getElementById('cashPrice').value);
+        const profit = parseMoneyValue(document.getElementById('profitPrice').value);
+        const monthly = parseMoneyValue(document.getElementById('monthlyAmountInput').value);
+        document.getElementById('btnAddCustomer').disabled = !(name && cash > 0 && monthly > 0);
     }
 
     function showToast(msg) {
         const container = document.getElementById('toast-container');
         const toast = document.createElement('div');
         toast.className = 'toast';
-        toast.innerText = msg;
+        toast.innerHTML = `🔔 ${msg}`;
         container.appendChild(toast);
-        setTimeout(() => toast.style.opacity = '1', 10);
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            setTimeout(() => toast.remove(), 300);
-        }, 2500);
+        setTimeout(() => { toast.style.opacity = '1'; }, 10);
+        setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
     }
 
-    function toggleTheme() {
-        const body = document.body;
-        if (body.getAttribute('data-theme') === 'light') {
-            body.removeAttribute('data-theme');
-            localStorage.setItem('app_theme', 'dark');
+    function armDoubleConfirm(btnElement, confirmText, onConfirmCallback) {
+        if (btnElement.getAttribute('data-armed') === 'true') {
+            clearTimeout(btnElement.confirmTimer);
+            btnElement.removeAttribute('data-armed');
+            btnElement.classList.remove('confirm-armed');
+            btnElement.innerText = btnElement.getAttribute('data-original-text');
+            onConfirmCallback();
         } else {
-            body.setAttribute('data-theme', 'light');
-            localStorage.setItem('app_theme', 'light');
+            const originalText = btnElement.innerText;
+            btnElement.setAttribute('data-original-text', originalText);
+            btnElement.setAttribute('data-armed', 'true');
+            btnElement.classList.add('confirm-armed');
+            let remainingSeconds = 5;
+            btnElement.innerText = `${confirmText} (${remainingSeconds}ث)`;
+            btnElement.confirmTimer = setInterval(() => {
+                remainingSeconds--;
+                if (remainingSeconds > 0) btnElement.innerText = `${confirmText} (${remainingSeconds}ث)`;
+                else {
+                    clearInterval(btnElement.confirmTimer);
+                    btnElement.removeAttribute('data-armed');
+                    btnElement.classList.remove('confirm-armed');
+                    btnElement.innerText = originalText;
+                }
+            }, 1000);
         }
     }
-    if (localStorage.getItem('app_theme') === 'light') {
-        document.body.setAttribute('data-theme', 'light');
+
+    function calculateMonthDueDate(fixedDay, monthOffset, baseMonthOffset = 0) {
+        let now = new Date();
+        let targetMonthIndex = now.getMonth() + baseMonthOffset + (monthOffset - 1);
+        let targetDate = new Date(now.getFullYear(), targetMonthIndex, fixedDay, 10, 0, 0);
+        let lastDayInMonth = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).getDate();
+        targetDate.setDate(Math.min(fixedDay, lastDayInMonth));
+        return targetDate.getTime();
     }
 
-    function autoCalcTotal() {
-        const cash = parseNum(document.getElementById('cashPrice').value);
-        const profit = parseNum(document.getElementById('profitPrice').value);
-        const total = cash + profit;
-        document.getElementById('totalPrice').value = total > 0 ? formatNum(total) : '';
-    }
-
-    function validateForm() {
-        const name = document.getElementById('custName').value.trim();
-        const cash = parseNum(document.getElementById('cashPrice').value);
-        const monthly = parseNum(document.getElementById('monthlyAmountInput').value);
-        const btn = document.getElementById('btnAddCustomer');
-        btn.disabled = !(name && cash > 0 && monthly > 0);
-    }
-
-    function addCustomer() {
-        const name = document.getElementById('custName').value.trim();
-        const phone = document.getElementById('custPhone').value.trim();
-        const model = document.getElementById('phoneModel').value.trim();
-        const cash = parseNum(document.getElementById('cashPrice').value);
-        const profit = parseNum(document.getElementById('profitPrice').value);
-        const total = cash + profit;
-        const first = parseNum(document.getElementById('firstPay').value);
-        const fixedDay = parseInt(document.getElementById('fixedDayInput').value) || 10;
-        const monthly = parseNum(document.getElementById('monthlyAmountInput').value);
-
-        const netDebt = total - first;
-        const count = Math.ceil(netDebt / monthly);
-        const months = [];
-
-        let curDate = new Date();
-        for (let i = 0; i < count; i++) {
-            curDate.setMonth(curDate.getMonth() + 1);
-            let d = new Date(curDate.getFullYear(), curDate.getMonth(), fixedDay);
-            let targetAmt = (i === count - 1 && netDebt % monthly !== 0) ? (netDebt % monthly) : monthly;
-
-            months.push({
-                dueDate: d.toISOString().split('T')[0],
-                targetAmount: targetAmt,
-                paidAmount: 0,
-                status: 'pending',
-                payments: []
-            });
-        }
-
-        const id = 'cust_' + Date.now();
-        allCustomers[id] = {
-            id, name, phone, model, cashPrice: cash, profitPrice: profit,
-            totalPrice: total, firstPayment: first, fixedDay, monthlyAmount: monthly,
-            createdAt: new Date().toISOString().split('T')[0], months
-        };
-
-        saveState();
-        addLog(`تمت إضافة العقد الجديد: ${name}`);
-        showToast('تم حفظ العقد بنجاح ومزامنته سحابياً!');
-        
-        document.getElementById('custName').value = '';
-        document.getElementById('custPhone').value = '';
-        document.getElementById('phoneModel').value = '';
-        document.getElementById('cashPrice').value = '';
-        document.getElementById('profitPrice').value = '';
-        document.getElementById('totalPrice').value = '';
-        document.getElementById('firstPay').value = '';
-        document.getElementById('monthlyAmountInput').value = '';
-        validateForm();
-        renderTable();
-    }
-
-    function setFilter(filter, btn) {
-        activeFilter = filter;
+    function setFilter(filterType, btn) {
+        activeFilter = filterType;
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         renderTable();
     }
 
-    function renderTable() {
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = '';
-        const query = document.getElementById('search').value.toLowerCase();
-        const today = new Date().toISOString().split('T')[0];
-
-        Object.values(allCustomers).forEach(c => {
-            if (query && !c.name.toLowerCase().includes(query) && !c.phone.includes(query) && !c.model.toLowerCase().includes(query)) return;
-
-            let remaining = c.totalPrice - c.firstPayment;
-            let late = false, near = false;
-            let nextDue = '--';
-
-            if (c.months) {
-                c.months.forEach(m => {
-                    remaining -= m.paidAmount;
-                    if (m.paidAmount < m.targetAmount) {
-                        if (nextDue === '--') nextDue = m.dueDate;
-                        if (m.dueDate < today) late = true;
-                        else {
-                            let diff = (new Date(m.dueDate) - new Date(today)) / (1000 * 3600 * 24);
-                            if (diff >= 0 && diff <= 3) near = true;
-                        }
-                    }
-                });
-            }
-
-            if (activeFilter === 'late' && !late) return;
-            if (activeFilter === 'near' && !near) return;
-            if (activeFilter === 'completed' && remaining > 0) return;
-
-            let badgeHtml = '';
-            if (remaining <= 0) badgeHtml = `<span class="badge badge-paid">مكتمل</span>`;
-            else if (late) badgeHtml = `<span class="badge badge-danger">متأخر ⚠️</span>`;
-            else if (near) badgeHtml = `<span class="badge badge-near">قريب ⏳</span>`;
-            else badgeHtml = `<span class="badge badge-debt">مستمر</span>`;
-
-            let tr = document.createElement('tr');
-            tr.onclick = () => viewCustomer(c.id);
-            tr.innerHTML = `
-                <td><b>${c.name}</b></td>
-                <td>${c.model}</td>
-                <td>${c.phone || '--'}</td>
-                <td style="color:var(--danger); font-weight:bold;">${formatNum(Math.max(0, remaining))}</td>
-                <td>${nextDue}</td>
-                <td>${badgeHtml}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-
-        updateDashboard();
-    }
+    function loadData() { updateDashboard(); renderTable(); if(currentId) showCustomer(currentId); }
 
     function updateDashboard() {
-        let totalContracts = 0, lateCount = 0, nearCount = 0, totalProfit = 0, cashTotal = 0, collected = 0;
-        const today = new Date().toISOString().split('T')[0];
+        let totalContracts = 0, lateCount = 0, nearCount = 0, totalProfit = 0, totalCash = 0, totalCollected = 0;
+        const now = new Date(); now.setHours(0,0,0,0);
+        const threeDaysLater = now.getTime() + (3 * 24 * 3600 * 1000);
 
-        Object.values(allCustomers).forEach(c => {
+        Object.keys(allCustomers).forEach(id => {
+            const c = allCustomers[id];
             totalContracts++;
-            totalProfit += c.profitPrice || 0;
-            cashTotal += c.cashPrice || 0;
-            collected += c.firstPayment || 0;
+            totalCash += (c.cashPrice || c.total);
+            totalProfit += (c.profitPrice || 0);
+            totalCollected += (c.firstPay || 0);
 
-            let isLate = false, isNear = false;
             if (c.months) {
                 c.months.forEach(m => {
-                    collected += m.paidAmount || 0;
-                    if (m.paidAmount < m.targetAmount) {
-                        if (m.dueDate < today) isLate = true;
-                        else {
-                            let diff = (new Date(m.dueDate) - new Date(today)) / (1000 * 3600 * 24);
-                            if (diff >= 0 && diff <= 3) isNear = true;
-                        }
+                    totalCollected += (m.required - m.remaining);
+                    if (m.remaining > 0) {
+                        if (m.dueDate < now.getTime()) lateCount++;
+                        else if (m.dueDate <= threeDaysLater) nearCount++;
                     }
                 });
             }
-
-            if (isLate) lateCount++;
-            if (isNear) nearCount++;
         });
 
         document.getElementById('dashTotalContracts').innerText = totalContracts;
         document.getElementById('dashLateCount').innerText = lateCount;
         document.getElementById('dashNearCount').innerText = nearCount;
         document.getElementById('dashTotalProfit').innerText = formatNum(totalProfit);
-        document.getElementById('dashCashTotal').innerText = formatNum(cashTotal);
-        document.getElementById('dashCollected').innerText = formatNum(collected);
+        document.getElementById('dashCashTotal').innerText = formatNum(totalCash);
+        document.getElementById('dashCollected').innerText = formatNum(totalCollected);
     }
 
-    function viewCustomer(id) {
+    function renderTable() {
+        const term = document.getElementById('search').value.toLowerCase().trim();
+        const body = document.getElementById('tableBody');
+        body.innerHTML = '';
+        const now = new Date(); now.setHours(0,0,0,0);
+        const threeDaysLater = now.getTime() + (3 * 24 * 3600 * 1000);
+
+        Object.keys(allCustomers).forEach(id => {
+            const c = allCustomers[id];
+            const matchSearch = c.name.toLowerCase().includes(term) || (c.phone && c.phone.includes(term)) || (c.model && c.model.toLowerCase().includes(term));
+            if(!matchSearch) return;
+
+            let totalRemaining = 0, nextDueTimestamp = null;
+            if (c.months) {
+                c.months.forEach(m => {
+                    totalRemaining += m.remaining;
+                    if (m.remaining > 0 && !nextDueTimestamp) nextDueTimestamp = m.dueDate;
+                });
+            }
+
+            let daysDiff = 0, formattedDateStr = "--";
+            if(nextDueTimestamp && totalRemaining > 0) {
+                const dueDate = new Date(nextDueTimestamp);
+                formattedDateStr = dueDate.toLocaleDateString('en-CA');
+                dueDate.setHours(0,0,0,0);
+                daysDiff = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 3600 * 24));
+            }
+
+            let isLate = daysDiff < 0 && totalRemaining > 0;
+            let isNear = daysDiff >= 0 && daysDiff <= 3 && totalRemaining > 0;
+            let isCompleted = totalRemaining <= 0;
+
+            if(activeFilter === 'late' && !isLate) return;
+            if(activeFilter === 'near' && !isNear) return;
+            if(activeFilter === 'completed' && !isCompleted) return;
+
+            let statusBadge = '';
+            if(isCompleted) statusBadge = '<span class="badge badge-paid">تم التسديد</span>';
+            else if(isLate) statusBadge = `<span class="badge badge-danger">متأخر ${Math.abs(daysDiff)} يوم</span>`;
+            else if(isNear) statusBadge = `<span class="badge badge-near">باقي ${daysDiff} يوم</span>`;
+            else statusBadge = `<span class="badge badge-debt">باقي ${daysDiff} يوم</span>`;
+
+            body.innerHTML += `<tr onclick="showCustomer('${id}')">
+                <td><b>${c.name}</b></td>
+                <td>${c.model || '--'}</td>
+                <td>${c.phone || '--'}</td>
+                <td>${formatNum(totalRemaining)} د.ع</td>
+                <td>${formattedDateStr}</td>
+                <td>${statusBadge}</td>
+            </tr>`;
+        });
+    }
+
+    function addCustomer() {
+        const name = document.getElementById('custName').value.trim();
+        const cashPrice = parseMoneyValue(document.getElementById('cashPrice').value);
+        const profitPrice = parseMoneyValue(document.getElementById('profitPrice').value);
+        const total = cashPrice + profitPrice;
+
+        const first = parseMoneyValue(document.getElementById('firstPay').value) || 0;
+        const fixedDay = parseInt(document.getElementById('fixedDayInput').value) || 10;
+        const monthlyAmount = parseMoneyValue(document.getElementById('monthlyAmountInput').value);
+
+        const netRemaining = total - first;
+        const totalMonthsCount = Math.ceil(netRemaining / monthlyAmount);
+        let monthsArray = [];
+        let runningDebt = netRemaining;
+
+        let baseMonthOffset = 0;
+        if (first > 0) {
+            baseMonthOffset = 1;
+        }
+
+        for (let i = 1; i <= totalMonthsCount; i++) {
+            let currentRequired = Math.min(monthlyAmount, runningDebt);
+            monthsArray.push({
+                monthNumber: i,
+                dueDate: calculateMonthDueDate(fixedDay, i, baseMonthOffset),
+                required: currentRequired,
+                remaining: currentRequired,
+                status: "Unpaid",
+                payments: []
+            });
+            runningDebt -= currentRequired;
+        }
+
+        const newId = 'cust_' + Date.now();
+        const newCustomer = {
+            name,
+            phone: document.getElementById('custPhone').value,
+            model: document.getElementById('phoneModel').value,
+            cashPrice,
+            profitPrice,
+            total,
+            firstPay: first,
+            fixedDay,
+            monthlyAmount,
+            purchaseDate: new Date().toLocaleDateString('en-CA'),
+            months: monthsArray
+        };
+
+        saveCustomerToCloud(newId, newCustomer);
+        addLog(name, "إضافة عقد", `عقد جديد بمبلغ ${formatNum(total)} د.ع`);
+        showToast("تم الحفظ بنجاح");
+        
+        document.querySelectorAll('.grid-form input').forEach(i => i.value = '');
+        document.getElementById('fixedDayInput').value = 10;
+        validateForm();
+    }
+
+    function showCustomer(id) {
         currentId = id;
         const c = allCustomers[id];
-        if (!c) return;
+        if(!c) return showMain();
 
         document.getElementById('mainView').style.display = 'none';
         document.getElementById('customerView').style.display = 'block';
 
         document.getElementById('viewName').innerText = c.name;
-        document.getElementById('viewPhoneDisplay').innerText = (c.phone ? '📱 ' + c.phone : '') + ' | ' + c.model;
-        document.getElementById('viewTotal').innerText = formatNum(c.totalPrice) + ' د.ع';
+        document.getElementById('viewPhoneDisplay').innerText = `هاتف: ${c.phone || '--'} | جهاز: ${c.model || '--'}`;
+        document.getElementById('viewTotal').innerText = formatNum(c.total) + " د.ع";
 
-        let remaining = c.totalPrice - c.firstPayment;
-        if (c.months) c.months.forEach(m => remaining -= m.paidAmount);
-        document.getElementById('viewRemaining').innerText = formatNum(Math.max(0, remaining)) + ' د.ع';
+        let totalRemaining = 0;
+        if(c.months) c.months.forEach(m => totalRemaining += m.remaining);
+        document.getElementById('viewRemaining').innerText = formatNum(totalRemaining) + " د.ع";
 
-        const logs = document.getElementById('monthsLog');
-        logs.innerHTML = '';
+        const log = document.getElementById('monthsLog');
+        log.innerHTML = '';
 
-        if (c.months) {
+        if(c.months) {
             c.months.forEach((m, idx) => {
-                let statusBadge = m.paidAmount >= m.targetAmount ? `<span class="badge badge-paid">مدفوع بالكامل</span>` : (m.paidAmount > 0 ? `<span class="badge badge-debt">مدفوع جزئياً</span>` : `<span class="badge badge-danger">غير مدفوع</span>`);
+                let isPaid = m.remaining === 0;
+                let statusBadge = isPaid ? '<span class="badge badge-paid">✓ مدفوع</span>' : '<span class="badge badge-debt">⏰ مستحق</span>';
+                let paidSoFar = m.required - m.remaining;
 
-                let card = document.createElement('div');
-                card.className = 'installment-card';
-                card.innerHTML = `
-                    <div class="inst-header">
-                        <span class="inst-number">القسط #${idx + 1}</span>
-                        ${statusBadge}
-                    </div>
+                log.innerHTML += `
+                <div class="installment-card" style="border-right: 4px solid ${isPaid ? 'var(--success)' : 'var(--warning)'};">
+                    <div class="inst-header"><span class="inst-number">قسط #${m.monthNumber}</span><div>${statusBadge}</div></div>
                     <div class="inst-dates-values">
-                        <div><b>تاريخ الاستحقاق:</b><br>${m.dueDate}</div>
-                        <div><b>المطلوب:</b><br>${formatNum(m.targetAmount)} د.ع</div>
-                        <div><b>المدفوع:</b><br><span style="color:var(--success);">${formatNum(m.paidAmount)}</span></div>
-                        <div><b>المتبقي:</b><br><span style="color:var(--danger);">${formatNum(m.targetAmount - m.paidAmount)}</span></div>
+                        <div><small style="color:var(--text-muted);">تاريخ الاستحقاق</small><br><b>${new Date(m.dueDate).toLocaleDateString('en-CA')}</b></div>
+                        <div style="text-align:left;"><small style="color:var(--text-muted);">المستحق / المدفوع</small><br><b>${formatNum(m.required)} د.ع</b><br><span style="color:var(--success);">مستلم: ${formatNum(paidSoFar)}</span></div>
                     </div>
                     <div class="inst-actions">
-                        <button class="btn-main" style="flex:1;" onclick="openSinglePayModal(${idx})">تسديد مبلغ 💳</button>
-                        <button class="btn-back" onclick="openMonthPaymentsModal(${idx})">📜 الحركات (${m.payments ? m.payments.length : 0})</button>
+                        ${!isPaid ? `<button class="btn-main" style="padding:8px 12px; font-size:12px;" onclick="openSinglePayModal(${idx})">💵 دفع</button>` : ''}
+                        <button class="btn-back" style="padding:8px 12px; font-size:12px;" onclick="openMonthPaymentsModal(${idx})">📂 الدفعات (${m.payments ? m.payments.length : 0})</button>
+                        <button class="btn-back" style="padding:8px 12px; font-size:12px;" onclick="printReceipt(${idx})">🖨️ طباعة الوصل</button>
                     </div>
-                `;
-                logs.appendChild(card);
+                </div>`;
             });
         }
+
+        document.getElementById('btnAutoPayInline').style.display = (totalRemaining <= 0) ? 'none' : 'flex';
     }
 
     function showMain() {
         currentId = null;
         document.getElementById('customerView').style.display = 'none';
         document.getElementById('mainView').style.display = 'block';
-        renderTable();
+        loadData();
     }
 
-    function openSinglePayModal(idx) {
-        targetMonthIndexForPay = idx;
-        const c = allCustomers[currentId];
-        const m = c.months[idx];
-        const rem = m.targetAmount - m.paidAmount;
+    function handleDeleteCustomerClick(btnElement) {
+        armDoubleConfirm(btnElement, "تأكيد حذف العقد نهائياً؟", () => {
+            if (currentId && allCustomers[currentId]) {
+                const cName = allCustomers[currentId].name;
+                removeCustomerFromCloud(currentId);
+                addLog(cName, "حذف عقد", "تم حذف عقد الزبون بالكامل");
+                showToast("تم حذف الزبون بنجاح");
+                showMain();
+            }
+        });
+    }
 
-        document.getElementById('singlePayTitle').innerText = `تسديد القسط #${idx + 1}`;
-        document.getElementById('singlePaySubTitle').innerText = `المتبقي من هذا القسط: ${formatNum(rem)} د.ع`;
-        document.getElementById('singlePayInput').value = formatNum(rem);
+    function openSinglePayModal(monthIndex) {
+        targetMonthIndexForPay = monthIndex;
+        const c = allCustomers[currentId];
+        const m = c.months[monthIndex];
+        document.getElementById('singlePayTitle').innerText = `تسديد القسط #${m.monthNumber}`;
+        document.getElementById('singlePaySubTitle').innerText = `المتبقي لهذا القسط: ${formatNum(m.remaining)} د.ع`;
+        document.getElementById('singlePayInput').value = formatNum(m.remaining);
         document.getElementById('singlePayModal').style.display = 'flex';
     }
-
-    function closeSinglePayModal() {
-        document.getElementById('singlePayModal').style.display = 'none';
-    }
+    function closeSinglePayModal() { document.getElementById('singlePayModal').style.display = 'none'; }
 
     function confirmSinglePayment() {
-        const amt = parseNum(document.getElementById('singlePayInput').value);
-        if (amt <= 0) return;
+        const amount = parseMoneyValue(document.getElementById('singlePayInput').value);
+        if (amount <= 0) return showToast("يرجى إدخال مبلغ صحيح");
 
         const c = allCustomers[currentId];
         const m = c.months[targetMonthIndexForPay];
 
-        m.paidAmount += amt;
+        if (amount > m.remaining) return showToast(`المبلغ أدناه أكبر من المتبقي لهذا القسط (${formatNum(m.remaining)} د.ع)`);
+
+        m.remaining -= amount;
         if (!m.payments) m.payments = [];
-        m.payments.push({ amount: amt, date: new Date().toLocaleDateString('ar-IQ') });
+        m.payments.push({
+            date: new Date().toLocaleDateString('en-CA'),
+            amount: amount
+        });
 
-        if (m.paidAmount >= m.targetAmount) m.status = 'completed';
-
-        saveState();
-        addLog(`تم دفع ${formatNum(amt)} للزبون ${c.name} - القسط #${targetMonthIndexForPay + 1}`);
+        saveCustomerToCloud(currentId, c);
+        addLog(c.name, "دفع قسط", `دفع مبلغ ${formatNum(amount)} د.ع للقسط #${m.monthNumber}`);
         closeSinglePayModal();
-        viewCustomer(currentId);
-        showToast('تم تسجيل الدفعة بنجاح!');
+        showCustomer(currentId);
+        showToast("تم تسجيل الدفعة بنجاح");
     }
 
-    function openAutoPayModal() {
-        document.getElementById('autoPayModal').style.display = 'flex';
-    }
-    function closeAutoPayModal() {
-        document.getElementById('autoPayModal').style.display = 'none';
-    }
-
-    function executeAutoPaymentFromModal() {
-        let amt = parseNum(document.getElementById('newPayModalInput').value);
-        if (amt <= 0) return;
-
+    function openMonthPaymentsModal(monthIndex) {
         const c = allCustomers[currentId];
-        let originalAmt = amt;
-
-        if (c.months) {
-            for (let m of c.months) {
-                let needed = m.targetAmount - m.paidAmount;
-                if (needed > 0) {
-                    let pay = Math.min(amt, needed);
-                    m.paidAmount += pay;
-                    if (!m.payments) m.payments = [];
-                    m.payments.push({ amount: pay, date: new Date().toLocaleDateString('ar-IQ') });
-                    amt -= pay;
-                    if (amt <= 0) break;
-                }
-            }
-        }
-
-        saveState();
-        addLog(`تم توزيع مبلغ أوتوماتيكي ${formatNum(originalAmt)} للزبون ${c.name}`);
-        closeAutoPayModal();
-        viewCustomer(currentId);
-        showToast('تم توزيع المبلغ بنجاح على الأقساط!');
-    }
-
-    function openMonthPaymentsModal(idx) {
-        const c = allCustomers[currentId];
-        const m = c.months[idx];
+        const m = c.months[monthIndex];
+        document.getElementById('monthPayTitle').innerText = `سجل دفعات القسط #${m.monthNumber}`;
         const list = document.getElementById('monthPaymentsList');
         list.innerHTML = '';
 
         if (!m.payments || m.payments.length === 0) {
-            list.innerHTML = '<p style="text-align:center; font-size:12px; color:var(--text-muted);">لا توجد حركات تسديد مسجلة لهذا القسط.</p>';
+            list.innerHTML = '<p style="text-align:center; color:var(--text-muted);">لا توجد دفعات مسجلة لهذا القسط.</p>';
         } else {
             m.payments.forEach((p, pIdx) => {
-                let div = document.createElement('div');
-                div.style.cssText = 'display:flex; justify-content:space-between; align-items:center; background:var(--card-inner); padding:10px; border-radius:8px; margin-bottom:8px; border:1px solid var(--border-color);';
-                div.innerHTML = `
-                    <div><b>${formatNum(p.amount)} د.ع</b> <span style="font-size:10px; color:var(--text-muted);">${p.date}</span></div>
-                    <button style="background:var(--danger); color:white; border:none; border-radius:6px; padding:4px 8px; font-size:11px;" onclick="deletePaymentFromMonth(${idx}, ${pIdx})">حذف 🗑️</button>
-                `;
-                list.appendChild(div);
+                list.innerHTML += `
+                <div style="display:flex; justify-content:space-between; align-items:center; background:var(--card-inner); padding:10px; border-radius:10px; margin-bottom:8px;">
+                    <div><b>${formatNum(p.amount)} د.ع</b><br><small style="color:var(--text-muted);">${p.date}</small></div>
+                </div>`;
             });
         }
-
-        document.getElementById('monthPayTitle').innerText = `حركات القسط #${idx + 1}`;
         document.getElementById('monthPaymentsModal').style.display = 'flex';
     }
+    function closeMonthPaymentsModal() { document.getElementById('monthPaymentsModal').style.display = 'none'; }
 
-    function closeMonthPaymentsModal() {
-        document.getElementById('monthPaymentsModal').style.display = 'none';
-    }
+    function openAutoPayModal() { document.getElementById('autoPayModal').style.display = 'flex'; }
+    function closeAutoPayModal() { document.getElementById('autoPayModal').style.display = 'none'; }
 
-    function deletePaymentFromMonth(mIdx, pIdx) {
+    function executeAutoPaymentFromModal() {
+        let amount = parseMoneyValue(document.getElementById('newPayModalInput').value);
+        if (amount <= 0) return showToast("يرجى إدخال مبلغ صحيح");
+
         const c = allCustomers[currentId];
-        const p = c.months[mIdx].payments[pIdx];
-        c.months[mIdx].paidAmount -= p.amount;
-        c.months[mIdx].payments.splice(pIdx, 1);
+        let originalAmount = amount;
 
-        saveState();
-        closeMonthPaymentsModal();
-        viewCustomer(currentId);
-        showToast('تم حذف حركة الدفع وإعادة توازن الحساب!');
+        for (let m of c.months) {
+            if (amount <= 0) break;
+            if (m.remaining > 0) {
+                let payForThis = Math.min(amount, m.remaining);
+                m.remaining -= payForThis;
+                amount -= payForThis;
+                if (!m.payments) m.payments = [];
+                m.payments.push({
+                    date: new Date().toLocaleDateString('en-CA'),
+                    amount: payForThis
+                });
+            }
+        }
+
+        saveCustomerToCloud(currentId, c);
+        addLog(c.name, "توزيع تلقائي", `تم توزيع مبلغ ${formatNum(originalAmount)} د.ع أوتوماتيكياً`);
+        closeAutoPayModal();
+        document.getElementById('newPayModalInput').value = '';
+        showCustomer(currentId);
+        showToast("تم توزيع المبلغ بنجاح");
     }
 
     function openEditCustomerModal() {
@@ -1003,167 +971,149 @@
         document.getElementById('editModel').value = c.model || '';
         document.getElementById('editCustModal').style.display = 'flex';
     }
+    function closeEditCustModal() { document.getElementById('editCustModal').style.display = 'none'; }
 
-    function closeEditCustModal() {
-        document.getElementById('editCustModal').style.display = 'none';
-    }
-
-    function handleSaveEditCust(btn) {
-        const c = allCustomers[currentId];
-        c.name = document.getElementById('editName').value.trim();
-        c.phone = document.getElementById('editPhone').value.trim();
-        c.model = document.getElementById('editModel').value.trim();
-
-        saveState();
-        closeEditCustModal();
-        viewCustomer(currentId);
-        showToast('تم تعديل بيانات الزبون بنجاح!');
-    }
-
-    function handleDeleteCustomerClick(btn) {
-        if (!btn.classList.contains('confirm-armed')) {
-            btn.classList.add('confirm-armed');
-            btn.innerText = '⚠️ تأكيد الحذف النهائي؟';
-            setTimeout(() => {
-                btn.classList.remove('confirm-armed');
-                btn.innerText = '🗑️ حذف الزبون';
-            }, 4000);
-            return;
-        }
-
-        const name = allCustomers[currentId].name;
-        delete allCustomers[currentId];
-        saveState();
-        addLog(`تم حذف الزبون والعقد: ${name}`);
-        showToast('تم حذف الزبون بنجاح!');
-        showMain();
+    function handleSaveEditCust(btnElement) {
+        armDoubleConfirm(btnElement, "تأكيد حفظ التعديلات؟", () => {
+            const c = allCustomers[currentId];
+            c.name = document.getElementById('editName').value.trim();
+            c.phone = document.getElementById('editPhone').value.trim();
+            c.model = document.getElementById('editModel').value.trim();
+            saveCustomerToCloud(currentId, c);
+            closeEditCustModal();
+            showCustomer(currentId);
+            showToast("تم تحديث البيانات بنجاح");
+        });
     }
 
     function openFullReportPreview() {
         const c = allCustomers[currentId];
-        if (!c) return;
-
-        document.getElementById('repPrintDate').innerText = new Date().toLocaleDateString('ar-IQ');
+        document.getElementById('repPrintDate').innerText = new Date().toLocaleDateString('en-CA');
         document.getElementById('repCustName').innerText = c.name;
-        document.getElementById('repCustPhone').innerText = c.phone || 'غير مسجل';
-        document.getElementById('repModel').innerText = c.model;
-        document.getElementById('repPurchaseDate').innerText = c.createdAt || '--';
-        document.getElementById('repFirstPay').innerText = formatNum(c.firstPayment) + ' د.ع';
+        document.getElementById('repCustPhone').innerText = c.phone || '--';
+        document.getElementById('repModel').innerText = c.model || '--';
+        document.getElementById('repPurchaseDate').innerText = c.purchaseDate || '--';
+        document.getElementById('repFirstPay').innerText = formatNum(c.firstPay) + " د.ع";
 
-        let paidSum = c.firstPayment;
-        if (c.months) c.months.forEach(m => paidSum += m.paidAmount);
-        let remSum = c.totalPrice - paidSum;
+        let totalRemaining = 0;
+        let totalPaidCalculated = c.firstPay || 0;
+        
+        const body = document.getElementById('reportTableBody');
+        body.innerHTML = '';
 
-        document.getElementById('repTotalAll').innerText = formatNum(c.totalPrice) + ' د.ع';
-        document.getElementById('repTotalPaid').innerText = formatNum(paidSum) + ' د.ع';
-        document.getElementById('repTotalRemaining').innerText = formatNum(Math.max(0, remSum)) + ' د.ع';
+        body.innerHTML += `<tr class="row-paid">
+            <td>--</td>
+            <td>${c.purchaseDate || '--'}</td>
+            <td>${c.purchaseDate || '--'}</td>
+            <td>المقدمة</td>
+            <td>${formatNum(c.firstPay)} د.ع</td>
+            <td><b style="color:#047857;">✓ مدفوع</b></td>
+        </tr>`;
 
-        const tbody = document.getElementById('reportTableBody');
-        tbody.innerHTML = '';
+        if(c.months) {
+            c.months.forEach(m => {
+                totalRemaining += m.remaining;
+                let paidInM = m.required - m.remaining;
+                totalPaidCalculated += paidInM;
 
-        if (c.months) {
-            c.months.forEach((m, idx) => {
-                let isDone = m.paidAmount >= m.targetAmount;
-                let lastPayDate = '--';
-                if (m.payments && m.payments.length > 0) {
-                    lastPayDate = m.payments[m.payments.length - 1].date;
+                let lastPayDate = "--";
+                if(m.payments && m.payments.length > 0) {
+                    lastPayDate = m.payments[m.payments.length - 1].date || "--";
                 }
 
-                let tr = document.createElement('tr');
-                if (isDone) tr.className = 'row-paid';
-                tr.innerHTML = `
-                    <td><b>${idx + 1}</b></td>
-                    <td>${m.dueDate}</td>
+                let isPaid = m.remaining === 0;
+                body.innerHTML += `<tr class="${isPaid ? 'row-paid' : ''}">
+                    <td>${m.monthNumber}</td>
+                    <td>${new Date(m.dueDate).toLocaleDateString('en-CA')}</td>
                     <td>${lastPayDate}</td>
-                    <td>${formatNum(m.targetAmount)}</td>
-                    <td style="color:#047857; font-weight:bold;">${formatNum(m.paidAmount)}</td>
-                    <td>${isDone ? '<b style="color:#047857;">مسدد</b>' : '<b style="color:#b91c1c;">غير مسدد</b>'}</td>
-                `;
-                tbody.appendChild(tr);
+                    <td>${formatNum(m.required)} د.ع</td>
+                    <td>${formatNum(paidInM)} د.ع</td>
+                    <td>${isPaid ? '<b style="color:#047857;">✓ مدفوع</b>' : '<b style="color:#b91c1c;">مستحق</b>'}</td>
+                </tr>`;
             });
         }
+
+        document.getElementById('repTotalAll').innerText = formatNum(c.total) + " د.ع";
+        document.getElementById('repTotalPaid').innerText = formatNum(totalPaidCalculated) + " د.ع";
+        document.getElementById('repTotalRemaining').innerText = formatNum(totalRemaining) + " د.ع";
 
         document.getElementById('reportPreviewModal').style.display = 'flex';
     }
 
-    function closeFullReportPreview() {
-        document.getElementById('reportPreviewModal').style.display = 'none';
+    function closeFullReportPreview() { document.getElementById('reportPreviewModal').style.display = 'none'; }
+
+    function sendWhatsAppPDF() {
+        showToast("يمكنك اختيار الحفظ كـ PDF من شاشة الطباعة الحالية");
+        window.print();
     }
 
-    function printReportPaper() { window.print(); }
-
-    function shareReportImage() {
-        const element = document.getElementById('printableReportPaper');
-        showToast('جاري تحضير الصورة للمشاركة...');
-        html2canvas(element, { scale: 2 }).then(canvas => {
-            canvas.toBlob(blob => {
-                const file = new File([blob], `كشف_حساب_${allCustomers[currentId].name}.png`, { type: 'image/png' });
-                if (navigator.share && navigator.canShare({ files: [file] })) {
-                    navigator.share({ title: 'كشف حساب - مركز الراشد', files: [file] }).catch(err => console.log(err));
-                } else {
-                    showToast('المشاركة المباشرة غير مدعومة في متصفحك.');
-                }
-            });
-        });
-    }
-
-    function downloadWhatsAppImage() {
-        const element = document.getElementById('printableReportPaper');
-        showToast('جاري إنشاء صورة الكشف...');
-        html2canvas(element, { scale: 2 }).then(canvas => {
+    function sendWhatsAppImage() {
+        const paper = document.getElementById('printableReportPaper');
+        html2canvas(paper).then(canvas => {
+            const image = canvas.toDataURL("image/png");
             const link = document.createElement('a');
-            link.download = `كشف_حساب_${allCustomers[currentId].name}.png`;
-            link.href = canvas.toDataURL('image/png');
+            link.href = image;
+            link.download = `تقرير_${allCustomers[currentId].name}.png`;
             link.click();
-            showToast('تم تنزيل الصورة!');
+            showToast("تم تحميل الصورة، يمكنك إرسالها للزبون عبر الواتساب");
         });
     }
 
-    function downloadWhatsAppPDF() {
-        const element = document.getElementById('printableReportPaper');
-        showToast('جاري تحضير ملف PDF...');
-        const opt = {
-            margin: 5,
-            filename: `كشف_حساب_${allCustomers[currentId].name}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2 },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-        };
-        html2pdf().set(opt).from(element).save().then(() => {
-            showToast('تم تنزيل PDF!');
-        });
+    function shareReport() {
+        if (navigator.share) {
+            navigator.share({ title: 'كشف حساب زبون', text: `كشف حساب الزبون: ${allCustomers[currentId].name}`, url: window.location.href });
+        } else {
+            showToast("تم نسخ رابط الصفحة للشارك");
+        }
     }
 
     function sendWhatsApp() {
         const c = allCustomers[currentId];
-        if (!c.phone) {
-            showToast('يرجى إضافة رقم هاتف للزبون أولاً!');
-            return;
+        let totalRemaining = 0;
+        let countdownText = "تم تسديد كامل الحساب";
+        let nextDueDateStr = "";
+
+        if(c.months) {
+            c.months.forEach(item => totalRemaining += item.remaining);
+            const now = new Date(); now.setHours(0,0,0,0);
+
+            for (let m of c.months) {
+                if (m.remaining > 0) {
+                    const dueDate = new Date(m.dueDate);
+                    nextDueDateStr = `(${dueDate.toLocaleDateString('en-CA')})`;
+                    dueDate.setHours(0,0,0,0);
+                    const daysDiff = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 3600 * 24));
+                    if (daysDiff > 0) countdownText = `باقي على القسط القادم ${daysDiff} يوم`;
+                    else if (daysDiff === 0) countdownText = `موعد القسط القادم هو اليوم`;
+                    else countdownText = `متأخر عن القسط القادم بمقدار ${Math.abs(daysDiff)} يوم`;
+                    break;
+                }
+            }
         }
 
-        let paidSum = c.firstPayment;
-        if (c.months) c.months.forEach(m => paidSum += m.paidAmount);
-        let rem = c.totalPrice - paidSum;
+        const text = `*مركز الراشد للاتصالات* 📱✨%0A` +
+                     `السلام عليكم أستاذ *${c.name}* المحترم..%0A%0A` +
+                     `الموقف المالي الحالي لحساب جهازكم 📱 *(${c.model || '--'})*:%0A` +
+                     `💰 *المبلغ المتبقي الصافي:* ${totalRemaining.toLocaleString()} د.ع%0A` +
+                     `📅 *موعد القسط القادم:* ${countdownText} ${nextDueDateStr}%0A` +
+                     `🗓️ *يوم الاستحقاق الشهري:* يوم ${c.fixedDay} من كل شهر.%0A%0A` +
+                     `شكراً لتعاملك مع مركز الراشد. 🌹`;
 
-        let msg = `السلام عليكم ورحمة الله وبركاته 🌹\nالأخ/الأخت: *${c.name}*\n\nتذكير كشف حساب من *مركز الراشد* 📱:\nالجهاز: *${c.model}*\nالمبلغ المتبقي الكلي: *${formatNum(Math.max(0, rem))} د.ع*\n\nشكراً لالتزامكم معنا!`;
-        let phoneFixed = c.phone.replace(/[^0-9]/g, '');
-        if (phoneFixed.startsWith('0')) phoneFixed = '964' + phoneFixed.substring(1);
-
-        window.open(`https://wa.me/${phoneFixed}?text=${encodeURIComponent(msg)}`, '_blank');
+        window.open(`https://wa.me/964${c.phone}?text=${text}`);
     }
 
     function openCalculatorModal() { document.getElementById('calcModal').style.display = 'flex'; }
     function closeCalculatorModal() { document.getElementById('calcModal').style.display = 'none'; }
-    function runCalc() {
-        const amt = parseNum(document.getElementById('cAmount').value);
-        const monthly = parseNum(document.getElementById('cMonthly').value);
-        const res = document.getElementById('calcResult');
 
-        if (amt > 0 && monthly > 0) {
-            const months = Math.ceil(amt / monthly);
-            res.innerHTML = `عدد الأشهر المطلوبة: <b style="color:var(--accent-blue); font-size:16px;">${months} أشهر</b>`;
+    function runCalc() {
+        const amount = parseMoneyValue(document.getElementById('cAmount').value);
+        const monthly = parseMoneyValue(document.getElementById('cMonthly').value);
+        const res = document.getElementById('calcResult');
+        if(amount > 0 && monthly > 0) {
+            const count = Math.ceil(amount / monthly);
+            res.innerHTML = `عدد الأشهر المطلوبة: <b>${count} شهر</b><br>المبلغ المتبقي بالآخر: <b>${formatNum(amount % monthly || monthly)} د.ع</b>`;
         } else {
-            res.innerText = 'أدخل المبالغ للحساب...';
+            res.innerText = "أدخل المبالغ للحساب...";
         }
     }
 
@@ -1171,13 +1121,17 @@
         const list = document.getElementById('generalLogList');
         list.innerHTML = '';
         if (appLogs.length === 0) {
-            list.innerHTML = '<p style="text-align:center; font-size:12px; color:var(--text-muted);">لا توجد عمليات مسجلة حتى الآن.</p>';
+            list.innerHTML = '<p style="text-align:center; color:var(--text-muted);">لا توجد حركات مسجلة بالسجل.</p>';
         } else {
             appLogs.forEach(l => {
-                let div = document.createElement('div');
-                div.style.cssText = 'background:var(--card-inner); padding:8px 12px; border-radius:8px; margin-bottom:6px; font-size:12px; border:1px solid var(--border-color);';
-                div.innerHTML = `<span style="font-size:10px; color:var(--text-muted); display:block;">${l.time}</span><b>${l.text}</b>`;
-                list.appendChild(div);
+                list.innerHTML += `
+                <div style="background:var(--card-inner); padding:10px; border-radius:10px; margin-bottom:8px; border-right:3px solid var(--accent-blue);">
+                    <div style="display:flex; justify-content:space-between; font-size:12px;">
+                        <b>${l.customerName} - ${l.actionType}</b>
+                        <small style="color:var(--text-muted);">${l.dateStr} ${l.timeStr}</small>
+                    </div>
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:4px;">${l.details}</div>
+                </div>`;
             });
         }
         document.getElementById('generalLogModal').style.display = 'flex';
@@ -1185,38 +1139,316 @@
     function closeGeneralLogModal() { document.getElementById('generalLogModal').style.display = 'none'; }
 
     function exportDataBackup() {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allCustomers));
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ customers: allCustomers, logs: appLogs }));
         const downloadAnchor = document.createElement('a');
         downloadAnchor.setAttribute("href", dataStr);
-        downloadAnchor.setAttribute("download", `نسخة_أقساط_الراشد_${new Date().toISOString().split('T')[0]}.json`);
+        downloadAnchor.setAttribute("download", `نسخة_أقساط_الراشد_${new Date().toLocaleDateString('en-CA')}.json`);
         document.body.appendChild(downloadAnchor);
         downloadAnchor.click();
         downloadAnchor.remove();
-        showToast('تم تصدير النسخة الاحتياطية بنجاح!');
+        showToast("تم تصدير النسخة الاحتياطية بنجاح");
     }
 
     function importDataBackup(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = function(e) {
+        const fileReader = new FileReader();
+        fileReader.onload = function(e) {
             try {
-                const imported = JSON.parse(e.target.result);
-                if (imported && typeof imported === 'object') {
-                    allCustomers = imported;
-                    saveState();
-                    renderTable();
-                    showToast('تم استيراد البيانات وإعادة تحميل النظام بنجاح!');
+                const parsed = JSON.parse(e.target.result);
+                if (parsed.customers) {
+                    customersRef.set(parsed.customers);
+                    if (parsed.logs) logsRef.set(parsed.logs);
+                    closeGeneralLogModal();
+                    showToast("تم استيراد البيانات إلى الفايربيس بنجاح");
                 }
             } catch (err) {
-                showToast('خطأ في ملف النسخة الاحتياطية!');
+                showToast("ملف غير صالح");
             }
         };
-        reader.readAsText(file);
+        fileReader.readAsText(event.target.files[0]);
     }
 
-    renderTable();
+    /* ==================== طباعة الوصل المعتمد المضبوط لـ 47mm ==================== */
+    function printReceipt(monthIndex) {
+        const c = allCustomers[currentId];
+        const m = c.months[monthIndex];
+
+        // 1. حساب المدفوع الخاص بهذا القسط المحدد
+        const totalPaidInThisMonth = m.payments ? m.payments.reduce((sum, p) => sum + p.amount, 0) : 0;
+
+        // 2. حساب المتبقي الحقيقي وقت هذه اللحظة (كل الأقساط المتبقية حالياً)
+        let currentTotalRemaining = 0;
+        c.months.forEach(item => currentTotalRemaining += item.remaining);
+
+        // 3. المبالغ المدفوعة في الأقساط اللاحقة لهذا القسط (بعد هذا القسط)
+        let paidInFutureMonths = 0;
+        for (let i = monthIndex + 1; i < c.months.length; i++) {
+            const nextMonth = c.months[i];
+            const paidInNext = nextMonth.payments ? nextMonth.payments.reduce((sum, p) => sum + p.amount, 0) : 0;
+            paidInFutureMonths += paidInNext;
+        }
+
+        // 4. المتبقي فور الانتهاء من دفع هذا القسط المحدد
+        const remainingAfterThisReceipt = currentTotalRemaining + paidInFutureMonths;
+
+        // 5. المطلوب سابقاً قبل دفع هذا القسط مباشرة
+        const oldRequiredAmount = remainingAfterThisReceipt + totalPaidInThisMonth;
+
+        // 6. استخراج رقم العملية أو توليد رقم ثابت
+        const txnNo = 'TXN-' + Math.floor(100000 + Math.random() * 900000);
+        const todayDate = new Date().toISOString().split('T')[0];
+
+        const printWindow = window.open('', '_blank', 'width=350,height=600');
+        printWindow.document.write(`
+            <!DOCTYPE html>
+            <html lang="ar" dir="rtl">
+            <head>
+                <meta charset="UTF-8">
+                <title>وصل POS - ${c.name}</title>
+                <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;800;900&display=swap" rel="stylesheet">
+                <style>
+                    * {
+                        box-sizing: border-box;
+                        font-family: 'Cairo', sans-serif;
+                    }
+
+                    body {
+                        background-color: #ffffff;
+                        color: #000000;
+                        margin: 0;
+                        padding: 0;
+                        display: flex;
+                        justify-content: center;
+                        align-items: flex-start;
+                    }
+
+                    .pos-receipt {
+                        background: #ffffff;
+                        color: #000000;
+                        width: 47mm;
+                        padding: 4px 2px;
+                        direction: rtl;
+                        font-family: 'Cairo', sans-serif;
+                        font-weight: 900;
+                        box-sizing: border-box;
+                        overflow: hidden;
+                    }
+
+                    .pos-header {
+                        text-align: center;
+                        line-height: 1.1;
+                    }
+
+                    .pos-header .title {
+                        font-size: 13.5px;
+                        font-weight: 900;
+                        margin: 0;
+                        letter-spacing: -0.5px;
+                    }
+
+                    .pos-header .subtitle {
+                        font-size: 9px;
+                        font-weight: 800;
+                        margin-top: 1px;
+                        display: block;
+                    }
+
+                    .pos-header .address {
+                        font-size: 8px;
+                        font-weight: 800;
+                        margin-top: 1px;
+                        display: block;
+                    }
+
+                    .divider-double {
+                        border-top: 1.5px dotted #000;
+                        margin: 4px 0;
+                    }
+
+                    .divider-line {
+                        border-top: 1px dashed #000;
+                        margin: 4px 0;
+                    }
+
+                    .info-table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        font-size: 9.5px;
+                        line-height: 1.35;
+                        table-layout: fixed;
+                    }
+
+                    .info-table td {
+                        padding: 1px 0;
+                        vertical-align: top;
+                    }
+
+                    .info-table td.label {
+                        text-align: right;
+                        width: 45%;
+                        font-weight: 800;
+                    }
+
+                    .info-table td.val {
+                        text-align: left;
+                        width: 55%;
+                        font-weight: 900;
+                        word-wrap: break-word;
+                    }
+
+                    .amount-box {
+                        border: 1.5px solid #000;
+                        padding: 3px 1px;
+                        margin: 4px 0;
+                        text-align: center;
+                        background: #fff;
+                    }
+
+                    .amount-box .pay-label {
+                        font-size: 8.5px;
+                        display: block;
+                        font-weight: 800;
+                    }
+
+                    .amount-box .pay-val {
+                        font-size: 14.5px;
+                        font-weight: 900;
+                        display: block;
+                        margin-top: -1px;
+                        line-height: 1.1;
+                    }
+
+                    .pos-footer {
+                        text-align: center;
+                        font-size: 8.5px;
+                        font-weight: 800;
+                        line-height: 1.2;
+                        margin-top: 4px;
+                    }
+
+                    @media print {
+                        body * {
+                            visibility: hidden;
+                        }
+
+                        body {
+                            background: white;
+                            padding: 0;
+                            margin: 0;
+                        }
+
+                        .pos-receipt, .pos-receipt * {
+                            visibility: visible;
+                        }
+
+                        .pos-receipt {
+                            position: absolute;
+                            left: 0;
+                            top: 0;
+                            width: 47mm !important;
+                            padding: 1mm 0.5mm !important;
+                            box-shadow: none;
+                            border-radius: 0;
+                        }
+
+                        @page {
+                            size: 47mm auto;
+                            margin: 0mm;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+
+                <div class="pos-receipt">
+                    <div class="pos-header">
+                        <h1 class="title">AL-RASHED POS</h1>
+                        <span class="subtitle">مركز الراشد للاتصالات</span>
+                        <span class="address">الزبير - حي الشهداء</span>
+                    </div>
+
+                    <div class="divider-double"></div>
+
+                    <table class="info-table">
+                        <tr>
+                            <td class="label">تاريخ العملية:</td>
+                            <td class="val">${todayDate}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">رقم العملية:</td>
+                            <td class="val">${txnNo}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">نوع الحركة:</td>
+                            <td class="val">تسديد قسط محلي</td>
+                        </tr>
+                    </table>
+
+                    <div class="divider-line"></div>
+
+                    <table class="info-table">
+                        <tr>
+                            <td class="label">الزبون:</td>
+                            <td class="val">${c.name}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">الجهاز:</td>
+                            <td class="val">${c.model || '--'}</td>
+                        </tr>
+                        <tr>
+                            <td class="label">رقم القسط:</td>
+                            <td class="val">قسط #${m.monthNumber}</td>
+                        </tr>
+                    </table>
+
+                    <div class="divider-line"></div>
+
+                    <table class="info-table">
+                        <tr>
+                            <td class="label">المبلغ الكلي:</td>
+                            <td class="val">${formatNum(c.total)} د.ع</td>
+                        </tr>
+                        <tr>
+                            <td class="label">المطلب سابقاً:</td>
+                            <td class="val">${formatNum(oldRequiredAmount)} د.ع</td>
+                        </tr>
+                    </table>
+
+                    <div class="amount-box">
+                        <span class="pay-label">الواصل الآن (ناجحة)</span>
+                        <span class="pay-val">${formatNum(totalPaidInThisMonth)} د.ع</span>
+                    </div>
+
+                    <table class="info-table">
+                        <tr>
+                            <td class="label" style="font-size: 10px;">المتبقي النهائي:</td>
+                            <td class="val" style="font-size: 10px; font-weight: 900;">${formatNum(remainingAfterThisReceipt)} د.ع</td>
+                        </tr>
+                        <tr>
+                            <td class="label">حالة العملية:</td>
+                            <td class="val" style="color:#000;">اعتماد (APPROVED)</td>
+                        </tr>
+                    </table>
+
+                    <div class="divider-double"></div>
+
+                    <div class="pos-footer">
+                        شكراً لتعاملكم مع مركز الراشد<br>
+                        يرجى الاحتفاظ بالوصل لضمان الحقوق
+                    </div>
+                </div>
+
+                <script>
+                    window.onload = function() {
+                        window.print();
+                        setTimeout(function() { window.close(); }, 500);
+                    };
+                <\/script>
+            </body>
+            </html>
+        `);
+        printWindow.document.close();
+    }
 </script>
+
 </body>
 </html>
