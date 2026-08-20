@@ -83,7 +83,7 @@
             gap: 5px;
         }
         .sync-online { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
-        .sync-offline { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .sync-offline { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
 
         .btn-action-top {
             background: var(--card-inner);
@@ -308,10 +308,10 @@
         <header>
             <div>
                 <h2 style="margin:0; font-size: 18px;">مركز الراشد - نظام الأقساط الذكي 📱</h2>
-                <span style="font-size:11px; color: var(--text-muted);">إدارة العقود والمبيعات المحلية</span>
+                <span style="font-size:11px; color: var(--text-muted);">إدارة العقود والمبيعات - ربط سحابي مباشر</span>
             </div>
             <div class="btn-header-group">
-                <div id="syncIndicator" class="sync-status sync-offline">🔴 أوفلاين</div>
+                <div id="syncIndicator" class="sync-status sync-offline">🔴 جاري الاتصال...</div>
                 <button class="btn-action-top" onclick="openCalculatorModal()">🧮 حاسبة سريعة</button>
                 <button class="btn-action-top" onclick="openGeneralLogModal()">📋 السجل والنسخ الاحتياطي</button>
             </div>
@@ -540,7 +540,7 @@
 </div>
 
 <script>
-    // ==================== تهيئة FIREBASE REALTIME DATABASE ====================
+    // ==================== FIREBASE REALTIME DATABASE ====================
     const firebaseConfig = {
       apiKey: "AIzaSyC6nz1_dENnayngLi1iiq8KDOKQmbfwNDI",
       authDomain: "rashedshopv1.firebaseapp.com",
@@ -555,52 +555,50 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    let allCustomers = JSON.parse(localStorage.getItem('local_installments')) || {};
-    let appLogs = JSON.parse(localStorage.getItem('local_app_logs')) || [];
+    let allCustomers = {};
+    let appLogs = [];
     let currentId = null;
     let activeFilter = 'all';
     let targetMonthIndexForPay = null;
 
-    // مراقبة حالة الاتصال بـ Firebase Realtime Database
-    const connectedRef = db.ref(".info/connected");
-    connectedRef.on("value", (snap) => {
+    // مراقبة الاتصال أونلاين بـ Firebase Realtime Database
+    db.ref(".info/connected").on("value", (snap) => {
         const ind = document.getElementById("syncIndicator");
         if (snap.val() === true) {
             ind.className = "sync-status sync-online";
-            ind.innerHTML = "🟢 أونلاين";
+            ind.innerHTML = "🟢 متصل بالإنترنت";
         } else {
             ind.className = "sync-status sync-offline";
-            ind.innerHTML = "🔴 أوفلاين";
+            ind.innerHTML = "🔴 غير متصل";
         }
     });
 
-    // مزامنة البيانات اللحظية (Realtime Data Sync)
+    // المزامنة والربط المباشر مع Realtime Database
     db.ref("customers").on("value", (snapshot) => {
         const data = snapshot.val();
-        if (data) {
-            allCustomers = data;
-            localStorage.setItem('local_installments', JSON.stringify(allCustomers));
-            renderTable();
-            if (currentId && allCustomers[currentId]) {
-                viewCustomer(currentId);
-            }
+        allCustomers = data || {};
+        renderTable();
+        if (currentId && allCustomers[currentId]) {
+            viewCustomer(currentId);
         }
+    });
+
+    db.ref("logs").on("value", (snapshot) => {
+        const data = snapshot.val();
+        appLogs = data || [];
     });
 
     function saveState() {
-        localStorage.setItem('local_installments', JSON.stringify(allCustomers));
         db.ref("customers").set(allCustomers);
-        renderTable();
-        updateDashboard();
     }
 
     function addLog(text) {
         const logItem = { time: new Date().toLocaleString('ar-IQ'), text: text };
         appLogs.unshift(logItem);
-        localStorage.setItem('local_app_logs', JSON.stringify(appLogs));
+        db.ref("logs").set(appLogs);
     }
 
-    // ==================== الدوال المساعدة والديكور ====================
+    // ==================== الدوال المساعدة ====================
     function parseNum(val) {
         if (!val) return 0;
         return parseFloat(val.toString().replace(/,/g, '')) || 0;
@@ -644,7 +642,7 @@
         document.body.setAttribute('data-theme', 'light');
     }
 
-    // ==================== الحسابات والنموذج ====================
+    // ==================== الحسابات والإضافة ====================
     function autoCalcTotal() {
         const cash = parseNum(document.getElementById('cashPrice').value);
         const profit = parseNum(document.getElementById('profitPrice').value);
@@ -712,7 +710,7 @@
         validateForm();
     }
 
-    // ==================== الجدول والرئيسية ====================
+    // ==================== الجدول والعرض ====================
     function setFilter(filter, btn) {
         activeFilter = filter;
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -733,17 +731,19 @@
             let late = false, near = false;
             let nextDue = '--';
 
-            c.months.forEach(m => {
-                remaining -= m.paidAmount;
-                if (m.paidAmount < m.targetAmount) {
-                    if (nextDue === '--') nextDue = m.dueDate;
-                    if (m.dueDate < today) late = true;
-                    else {
-                        let diff = (new Date(m.dueDate) - new Date(today)) / (1000 * 3600 * 24);
-                        if (diff >= 0 && diff <= 3) near = true;
+            if (c.months) {
+                c.months.forEach(m => {
+                    remaining -= m.paidAmount;
+                    if (m.paidAmount < m.targetAmount) {
+                        if (nextDue === '--') nextDue = m.dueDate;
+                        if (m.dueDate < today) late = true;
+                        else {
+                            let diff = (new Date(m.dueDate) - new Date(today)) / (1000 * 3600 * 24);
+                            if (diff >= 0 && diff <= 3) near = true;
+                        }
                     }
-                }
-            });
+                });
+            }
 
             if (activeFilter === 'late' && !late) return;
             if (activeFilter === 'near' && !near) return;
@@ -782,16 +782,18 @@
             collected += c.firstPayment || 0;
 
             let isLate = false, isNear = false;
-            c.months.forEach(m => {
-                collected += m.paidAmount || 0;
-                if (m.paidAmount < m.targetAmount) {
-                    if (m.dueDate < today) isLate = true;
-                    else {
-                        let diff = (new Date(m.dueDate) - new Date(today)) / (1000 * 3600 * 24);
-                        if (diff >= 0 && diff <= 3) isNear = true;
+            if (c.months) {
+                c.months.forEach(m => {
+                    collected += m.paidAmount || 0;
+                    if (m.paidAmount < m.targetAmount) {
+                        if (m.dueDate < today) isLate = true;
+                        else {
+                            let diff = (new Date(m.dueDate) - new Date(today)) / (1000 * 3600 * 24);
+                            if (diff >= 0 && diff <= 3) isNear = true;
+                        }
                     }
-                }
-            });
+                });
+            }
 
             if (isLate) lateCount++;
             if (isNear) nearCount++;
@@ -819,35 +821,37 @@
         document.getElementById('viewTotal').innerText = formatNum(c.totalPrice) + ' د.ع';
 
         let remaining = c.totalPrice - c.firstPayment;
-        c.months.forEach(m => remaining -= m.paidAmount);
+        if (c.months) c.months.forEach(m => remaining -= m.paidAmount);
         document.getElementById('viewRemaining').innerText = formatNum(Math.max(0, remaining)) + ' د.ع';
 
         const logs = document.getElementById('monthsLog');
         logs.innerHTML = '';
 
-        c.months.forEach((m, idx) => {
-            let statusBadge = m.paidAmount >= m.targetAmount ? `<span class="badge badge-paid">مدفوع بالكامل</span>` : (m.paidAmount > 0 ? `<span class="badge badge-debt">مدفوع جزئياً</span>` : `<span class="badge badge-danger">غير مدفوع</span>`);
+        if (c.months) {
+            c.months.forEach((m, idx) => {
+                let statusBadge = m.paidAmount >= m.targetAmount ? `<span class="badge badge-paid">مدفوع بالكامل</span>` : (m.paidAmount > 0 ? `<span class="badge badge-debt">مدفوع جزئياً</span>` : `<span class="badge badge-danger">غير مدفوع</span>`);
 
-            let card = document.createElement('div');
-            card.className = 'installment-card';
-            card.innerHTML = `
-                <div class="inst-header">
-                    <span class="inst-number">القسط #${idx + 1}</span>
-                    ${statusBadge}
-                </div>
-                <div class="inst-dates-values">
-                    <div><b>تاريخ الاستحقاق:</b><br>${m.dueDate}</div>
-                    <div><b>المطلوب:</b><br>${formatNum(m.targetAmount)} د.ع</div>
-                    <div><b>المدفوع:</b><br><span style="color:var(--success);">${formatNum(m.paidAmount)}</span></div>
-                    <div><b>المتبقي:</b><br><span style="color:var(--danger);">${formatNum(m.targetAmount - m.paidAmount)}</span></div>
-                </div>
-                <div class="inst-actions">
-                    <button class="btn-main" style="flex:1;" onclick="openSinglePayModal(${idx})">تسديد مبلغ 💳</button>
-                    <button class="btn-back" onclick="openMonthPaymentsModal(${idx})">📜 الحركات (${m.payments ? m.payments.length : 0})</button>
-                </div>
-            `;
-            logs.appendChild(card);
-        });
+                let card = document.createElement('div');
+                card.className = 'installment-card';
+                card.innerHTML = `
+                    <div class="inst-header">
+                        <span class="inst-number">القسط #${idx + 1}</span>
+                        ${statusBadge}
+                    </div>
+                    <div class="inst-dates-values">
+                        <div><b>تاريخ الاستحقاق:</b><br>${m.dueDate}</div>
+                        <div><b>المطلوب:</b><br>${formatNum(m.targetAmount)} د.ع</div>
+                        <div><b>المدفوع:</b><br><span style="color:var(--success);">${formatNum(m.paidAmount)}</span></div>
+                        <div><b>المتبقي:</b><br><span style="color:var(--danger);">${formatNum(m.targetAmount - m.paidAmount)}</span></div>
+                    </div>
+                    <div class="inst-actions">
+                        <button class="btn-main" style="flex:1;" onclick="openSinglePayModal(${idx})">تسديد مبلغ 💳</button>
+                        <button class="btn-back" onclick="openMonthPaymentsModal(${idx})">📜 الحركات (${m.payments ? m.payments.length : 0})</button>
+                    </div>
+                `;
+                logs.appendChild(card);
+            });
+        }
     }
 
     function showMain() {
@@ -857,7 +861,7 @@
         renderTable();
     }
 
-    // ==================== الدفع والتوزيع ====================
+    // ==================== التسديد والتوزيع ====================
     function openSinglePayModal(idx) {
         targetMonthIndexForPay = idx;
         const c = allCustomers[currentId];
@@ -908,15 +912,17 @@
         const c = allCustomers[currentId];
         let originalAmt = amt;
 
-        for (let m of c.months) {
-            let needed = m.targetAmount - m.paidAmount;
-            if (needed > 0) {
-                let pay = Math.min(amt, needed);
-                m.paidAmount += pay;
-                if (!m.payments) m.payments = [];
-                m.payments.push({ amount: pay, date: new Date().toLocaleDateString('ar-IQ') });
-                amt -= pay;
-                if (amt <= 0) break;
+        if (c.months) {
+            for (let m of c.months) {
+                let needed = m.targetAmount - m.paidAmount;
+                if (needed > 0) {
+                    let pay = Math.min(amt, needed);
+                    m.paidAmount += pay;
+                    if (!m.payments) m.payments = [];
+                    m.payments.push({ amount: pay, date: new Date().toLocaleDateString('ar-IQ') });
+                    amt -= pay;
+                    if (amt <= 0) break;
+                }
             }
         }
 
@@ -927,7 +933,7 @@
         showToast('تم توزيع المبلغ بنجاح على الأقساط!');
     }
 
-    // ==================== حركات القسط والتعديلات ====================
+    // ==================== الحركات والتعديلات ====================
     function openMonthPaymentsModal(idx) {
         const c = allCustomers[currentId];
         const m = c.months[idx];
@@ -968,7 +974,6 @@
         showToast('تم حذف حركة الدفع وإعادة توازن الحساب!');
     }
 
-    // ==================== تعديل وحذف الزبون ====================
     function openEditCustomerModal() {
         const c = allCustomers[currentId];
         document.getElementById('editName').value = c.name;
@@ -1012,7 +1017,7 @@
         showMain();
     }
 
-    // ==================== المعاينة والتقارير الشاملة ====================
+    // ==================== التقارير والطباعة ====================
     function openFullReportPreview() {
         const c = allCustomers[currentId];
         if (!c) return;
@@ -1025,7 +1030,7 @@
         document.getElementById('repFirstPay').innerText = formatNum(c.firstPayment) + ' د.ع';
 
         let paidSum = c.firstPayment;
-        c.months.forEach(m => paidSum += m.paidAmount);
+        if (c.months) c.months.forEach(m => paidSum += m.paidAmount);
         let remSum = c.totalPrice - paidSum;
 
         document.getElementById('repTotalAll').innerText = formatNum(c.totalPrice) + ' د.ع';
@@ -1035,25 +1040,27 @@
         const tbody = document.getElementById('reportTableBody');
         tbody.innerHTML = '';
 
-        c.months.forEach((m, idx) => {
-            let isDone = m.paidAmount >= m.targetAmount;
-            let lastPayDate = '--';
-            if (m.payments && m.payments.length > 0) {
-                lastPayDate = m.payments[m.payments.length - 1].date;
-            }
+        if (c.months) {
+            c.months.forEach((m, idx) => {
+                let isDone = m.paidAmount >= m.targetAmount;
+                let lastPayDate = '--';
+                if (m.payments && m.payments.length > 0) {
+                    lastPayDate = m.payments[m.payments.length - 1].date;
+                }
 
-            let tr = document.createElement('tr');
-            if (isDone) tr.className = 'row-paid';
-            tr.innerHTML = `
-                <td><b>${idx + 1}</b></td>
-                <td>${m.dueDate}</td>
-                <td>${lastPayDate}</td>
-                <td>${formatNum(m.targetAmount)}</td>
-                <td style="color:#047857; font-weight:bold;">${formatNum(m.paidAmount)}</td>
-                <td>${isDone ? '<b style="color:#047857;">مسدد</b>' : '<b style="color:#b91c1c;">غير مسدد</b>'}</td>
-            `;
-            tbody.appendChild(tr);
-        });
+                let tr = document.createElement('tr');
+                if (isDone) tr.className = 'row-paid';
+                tr.innerHTML = `
+                    <td><b>${idx + 1}</b></td>
+                    <td>${m.dueDate}</td>
+                    <td>${lastPayDate}</td>
+                    <td>${formatNum(m.targetAmount)}</td>
+                    <td style="color:#047857; font-weight:bold;">${formatNum(m.paidAmount)}</td>
+                    <td>${isDone ? '<b style="color:#047857;">مسدد</b>' : '<b style="color:#b91c1c;">غير مسدد</b>'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
 
         document.getElementById('reportPreviewModal').style.display = 'flex';
     }
@@ -1119,7 +1126,7 @@
         }
 
         let paidSum = c.firstPayment;
-        c.months.forEach(m => paidSum += m.paidAmount);
+        if (c.months) c.months.forEach(m => paidSum += m.paidAmount);
         let rem = c.totalPrice - paidSum;
 
         let msg = `السلام عليكم ورحمة الله وبركاته 🌹\nالأخ/الأخت: *${c.name}*\n\nتذكير كشف حساب من *مركز الراشد* 📱:\nالجهاز: *${c.model}*\nالمبلغ المتبقي الكلي: *${formatNum(Math.max(0, rem))} د.ع*\n\nشكراً لالتزامكم معنا!`;
@@ -1129,7 +1136,7 @@
         window.open(`https://wa.me/${phoneFixed}?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
-    // ==================== حاسبة وسجلات وسرعة ====================
+    // ==================== الحواسب والسجلات والنسخ الاحتياطي ====================
     function openCalculatorModal() {
         document.getElementById('calcModal').style.display = 'flex';
     }
@@ -1190,7 +1197,7 @@
                 if (imported && typeof imported === 'object') {
                     allCustomers = imported;
                     saveState();
-                    showToast('تم استيراد البيانات ومزامنتها بنجاح!');
+                    showToast('تم رفع النسخة وإعادة مزامنة قاعدة البيانات السحابية!');
                 }
             } catch (err) {
                 showToast('خطأ في ملف النسخة الاحتياطية!');
@@ -1198,9 +1205,6 @@
         };
         reader.readAsText(file);
     }
-
-    // التشغيل المبدئي عند تحميل الصفحة
-    renderTable();
 </script>
 </body>
 </html>
