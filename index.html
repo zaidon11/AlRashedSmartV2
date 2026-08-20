@@ -424,7 +424,7 @@
             </div>
             <div style="text-align:left; font-size:10px; color:#64748b; font-weight:700;">
                 <div>تاريخ التقرير</div>
-                <b style="color:#0f172a; font-size:11px;" id="repPrintDate">2026/08/19</b>
+                <b style="color:#0f172a; font-size:11px;" id="repPrintDate">2026/08/20</b>
             </div>
         </div>
 
@@ -540,7 +540,7 @@
 </div>
 
 <script>
-    // ==================== تهيئة FIREBASE وإدارتها ====================
+    // ==================== تهيئة FIREBASE REALTIME DATABASE ====================
     const firebaseConfig = {
       apiKey: "AIzaSyC6nz1_dENnayngLi1iiq8KDOKQmbfwNDI",
       authDomain: "rashedshopv1.firebaseapp.com",
@@ -561,7 +561,7 @@
     let activeFilter = 'all';
     let targetMonthIndexForPay = null;
 
-    // مراقبة حالة الاتصال بالإنترنت وFirebase
+    // مراقبة حالة الاتصال بـ Firebase Realtime Database
     const connectedRef = db.ref(".info/connected");
     connectedRef.on("value", (snap) => {
         const ind = document.getElementById("syncIndicator");
@@ -574,7 +574,7 @@
         }
     });
 
-    // مزامنة البيانات من وإلى القاعدة
+    // مزامنة البيانات اللحظية (Realtime Data Sync)
     db.ref("customers").on("value", (snapshot) => {
         const data = snapshot.val();
         if (data) {
@@ -927,7 +927,7 @@
         showToast('تم توزيع المبلغ بنجاح على الأقساط!');
     }
 
-    // ==================== حركات القسط التعديل والتعديلات ====================
+    // ==================== حركات القسط والتعديلات ====================
     function openMonthPaymentsModal(idx) {
         const c = allCustomers[currentId];
         const m = c.months[idx];
@@ -935,18 +935,20 @@
         list.innerHTML = '';
 
         if (!m.payments || m.payments.length === 0) {
-            list.innerHTML = '<p style="text-align:center; font-size:12px; color:var(--text-muted);">لا توجد حركات تسديد لهذا القسط</p>';
+            list.innerHTML = '<p style="text-align:center; font-size:12px; color:var(--text-muted);">لا توجد حركات تسديد مسجلة لهذا القسط.</p>';
         } else {
             m.payments.forEach((p, pIdx) => {
                 let div = document.createElement('div');
-                div.style.cssText = 'display:flex; justify-content:space-between; align-items:center; background:var(--card-inner); padding:8px 12px; border-radius:8px; margin-bottom:6px; font-size:12px;';
+                div.style.cssText = 'display:flex; justify-content:space-between; align-items:center; background:var(--card-inner); padding:10px; border-radius:8px; margin-bottom:8px; border:1px solid var(--border-color);';
                 div.innerHTML = `
-                    <span><b>${formatNum(p.amount)} د.ع</b> (${p.date})</span>
-                    <button style="background:var(--danger); color:white; padding:4px 8px; border-radius:6px; font-size:10px;" onclick="deletePayment(${idx}, ${pIdx})">حذف 🗑️</button>
+                    <div><b>${formatNum(p.amount)} د.ع</b> <span style="font-size:10px; color:var(--text-muted);">${p.date}</span></div>
+                    <button style="background:var(--danger); color:white; border:none; border-radius:6px; padding:4px 8px; font-size:11px;" onclick="deletePaymentFromMonth(${idx}, ${pIdx})">حذف 🗑️</button>
                 `;
                 list.appendChild(div);
             });
         }
+
+        document.getElementById('monthPayTitle').innerText = `حركات القسط #${idx + 1}`;
         document.getElementById('monthPaymentsModal').style.display = 'flex';
     }
 
@@ -954,20 +956,19 @@
         document.getElementById('monthPaymentsModal').style.display = 'none';
     }
 
-    function deletePayment(mIdx, pIdx) {
+    function deletePaymentFromMonth(mIdx, pIdx) {
         const c = allCustomers[currentId];
-        const m = c.months[mIdx];
-        const p = m.payments[pIdx];
-
-        m.paidAmount -= p.amount;
-        m.payments.splice(pIdx, 1);
+        const p = c.months[mIdx].payments[pIdx];
+        c.months[mIdx].paidAmount -= p.amount;
+        c.months[mIdx].payments.splice(pIdx, 1);
 
         saveState();
         closeMonthPaymentsModal();
         viewCustomer(currentId);
-        showToast('تم حذف حركة التسديد!');
+        showToast('تم حذف حركة الدفع وإعادة توازن الحساب!');
     }
 
+    // ==================== تعديل وحذف الزبون ====================
     function openEditCustomerModal() {
         const c = allCustomers[currentId];
         document.getElementById('editName').value = c.name;
@@ -980,7 +981,7 @@
         document.getElementById('editCustModal').style.display = 'none';
     }
 
-    function handleSaveEditCust() {
+    function handleSaveEditCust(btn) {
         const c = allCustomers[currentId];
         c.name = document.getElementById('editName').value.trim();
         c.phone = document.getElementById('editPhone').value.trim();
@@ -1000,47 +1001,56 @@
                 btn.classList.remove('confirm-armed');
                 btn.innerText = '🗑️ حذف الزبون';
             }, 4000);
-        } else {
-            delete allCustomers[currentId];
-            saveState();
-            showMain();
-            showToast('تم حذف العقد والزبون بنجاح!');
+            return;
         }
+
+        const name = allCustomers[currentId].name;
+        delete allCustomers[currentId];
+        saveState();
+        addLog(`تم حذف الزبون والعقد: ${name}`);
+        showToast('تم حذف الزبون بنجاح!');
+        showMain();
     }
 
-    // ==================== المعاينة والتقارير A4 ====================
+    // ==================== المعاينة والتقارير الشاملة ====================
     function openFullReportPreview() {
         const c = allCustomers[currentId];
+        if (!c) return;
+
         document.getElementById('repPrintDate').innerText = new Date().toLocaleDateString('ar-IQ');
         document.getElementById('repCustName').innerText = c.name;
-        document.getElementById('repCustPhone').innerText = c.phone || '--';
+        document.getElementById('repCustPhone').innerText = c.phone || 'غير مسجل';
         document.getElementById('repModel').innerText = c.model;
         document.getElementById('repPurchaseDate').innerText = c.createdAt || '--';
         document.getElementById('repFirstPay').innerText = formatNum(c.firstPayment) + ' د.ع';
 
-        let totalPaid = c.firstPayment;
-        c.months.forEach(m => totalPaid += m.paidAmount);
+        let paidSum = c.firstPayment;
+        c.months.forEach(m => paidSum += m.paidAmount);
+        let remSum = c.totalPrice - paidSum;
 
         document.getElementById('repTotalAll').innerText = formatNum(c.totalPrice) + ' د.ع';
-        document.getElementById('repTotalPaid').innerText = formatNum(totalPaid) + ' د.ع';
-        document.getElementById('repTotalRemaining').innerText = formatNum(Math.max(0, c.totalPrice - totalPaid)) + ' د.ع';
+        document.getElementById('repTotalPaid').innerText = formatNum(paidSum) + ' د.ع';
+        document.getElementById('repTotalRemaining').innerText = formatNum(Math.max(0, remSum)) + ' د.ع';
 
         const tbody = document.getElementById('reportTableBody');
         tbody.innerHTML = '';
 
         c.months.forEach((m, idx) => {
-            let lastPayDate = (m.payments && m.payments.length > 0) ? m.payments[m.payments.length - 1].date : '--';
-            let isFull = m.paidAmount >= m.targetAmount;
+            let isDone = m.paidAmount >= m.targetAmount;
+            let lastPayDate = '--';
+            if (m.payments && m.payments.length > 0) {
+                lastPayDate = m.payments[m.payments.length - 1].date;
+            }
 
             let tr = document.createElement('tr');
-            if (isFull) tr.className = 'row-paid';
+            if (isDone) tr.className = 'row-paid';
             tr.innerHTML = `
-                <td>${idx + 1}</td>
+                <td><b>${idx + 1}</b></td>
                 <td>${m.dueDate}</td>
                 <td>${lastPayDate}</td>
                 <td>${formatNum(m.targetAmount)}</td>
-                <td>${formatNum(m.paidAmount)}</td>
-                <td>${isFull ? 'مكتمل' : 'متبقي'}</td>
+                <td style="color:#047857; font-weight:bold;">${formatNum(m.paidAmount)}</td>
+                <td>${isDone ? '<b style="color:#047857;">مسدد</b>' : '<b style="color:#b91c1c;">غير مسدد</b>'}</td>
             `;
             tbody.appendChild(tr);
         });
@@ -1056,19 +1066,76 @@
         window.print();
     }
 
-    function sendWhatsApp() {
-        const c = allCustomers[currentId];
-        let remaining = c.totalPrice - c.firstPayment;
-        c.months.forEach(m => remaining -= m.paidAmount);
-
-        let msg = `السلام عليكم ${c.name} المحترم 🌹%0Aمن *مركز الراشد للأجهزة الذكية*%0Aنود تذكيركم بالتزامات الأقساط الخاصة بجهازك (${c.model}).%0Aالمبلغ المتبقي الكلي: *${formatNum(remaining)} د.ع*%0Aشكراً لتعاملكم معنا!`;
-        window.open(`https://wa.me/${c.phone}?text=${msg}`, '_blank');
+    function shareReportImage() {
+        const element = document.getElementById('printableReportPaper');
+        showToast('جاري تحضير الصورة للمشاركة...');
+        html2canvas(element, { scale: 2 }).then(canvas => {
+            canvas.toBlob(blob => {
+                const file = new File([blob], `كشف_حساب_${allCustomers[currentId].name}.png`, { type: 'image/png' });
+                if (navigator.share && navigator.canShare({ files: [file] })) {
+                    navigator.share({
+                        title: 'كشف حساب - مركز الراشد',
+                        files: [file]
+                    }).catch(err => console.log(err));
+                } else {
+                    showToast('المشاركة المباشرة غير مدعومة في متصفحك.');
+                }
+            });
+        });
     }
 
-    // ==================== الحاسبة والنسخ الاحتياطي ====================
-    function openCalculatorModal() { document.getElementById('calcModal').style.display = 'flex'; }
-    function closeCalculatorModal() { document.getElementById('calcModal').style.display = 'none'; }
+    function downloadWhatsAppImage() {
+        const element = document.getElementById('printableReportPaper');
+        showToast('جاري إنشاء صورة الكشف...');
+        html2canvas(element, { scale: 2 }).then(canvas => {
+            const link = document.createElement('a');
+            link.download = `كشف_حساب_${allCustomers[currentId].name}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            showToast('تم تنزيل الصورة! يمكنك الآن إرسالها بالواتساب.');
+        });
+    }
 
+    function downloadWhatsAppPDF() {
+        const element = document.getElementById('printableReportPaper');
+        showToast('جاري تحضير ملف PDF...');
+        const opt = {
+            margin: 5,
+            filename: `كشف_حساب_${allCustomers[currentId].name}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(element).save().then(() => {
+            showToast('تم تنزيل PDF! يمكنك مشاركته بملف عبر الواتساب.');
+        });
+    }
+
+    function sendWhatsApp() {
+        const c = allCustomers[currentId];
+        if (!c.phone) {
+            showToast('يرجى إضافة رقم هاتف للزبون أولاً!');
+            return;
+        }
+
+        let paidSum = c.firstPayment;
+        c.months.forEach(m => paidSum += m.paidAmount);
+        let rem = c.totalPrice - paidSum;
+
+        let msg = `السلام عليكم ورحمة الله وبركاته 🌹\nالأخ/الأخت: *${c.name}*\n\nتذكير كشف حساب من *مركز الراشد* 📱:\nالجهاز: *${c.model}*\nالمبلغ المتبقي الكلي: *${formatNum(Math.max(0, rem))} د.ع*\n\nشكراً لالتزامكم معنا!`;
+        let phoneFixed = c.phone.replace(/[^0-9]/g, '');
+        if (phoneFixed.startsWith('0')) phoneFixed = '964' + phoneFixed.substring(1);
+
+        window.open(`https://wa.me/${phoneFixed}?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    // ==================== حاسبة وسجلات وسرعة ====================
+    function openCalculatorModal() {
+        document.getElementById('calcModal').style.display = 'flex';
+    }
+    function closeCalculatorModal() {
+        document.getElementById('calcModal').style.display = 'none';
+    }
     function runCalc() {
         const amt = parseNum(document.getElementById('cAmount').value);
         const monthly = parseNum(document.getElementById('cMonthly').value);
@@ -1076,33 +1143,40 @@
 
         if (amt > 0 && monthly > 0) {
             const months = Math.ceil(amt / monthly);
-            res.innerHTML = `عدد الأشهر المطلوبة: <b style="color:var(--accent-blue);">${months} شهر</b><br>القسط الاخير: <b>${formatNum(amt % monthly === 0 ? monthly : amt % monthly)} د.ع</b>`;
+            res.innerHTML = `عدد الأشهر المطلوبة: <b style="color:var(--accent-blue); font-size:16px;">${months} أشهر</b>`;
         } else {
-            res.innerText = 'أدخل المبالغ لحساب الأشهر...';
+            res.innerText = 'أدخل المبالغ للحساب...';
         }
     }
 
     function openGeneralLogModal() {
         const list = document.getElementById('generalLogList');
         list.innerHTML = '';
-        appLogs.forEach(l => {
-            let div = document.createElement('div');
-            div.style.cssText = 'padding:8px; border-bottom:1px solid var(--border-color); font-size:11px;';
-            div.innerHTML = `<span style="color:var(--text-muted);">${l.time}</span> - <b>${l.text}</b>`;
-            list.appendChild(div);
-        });
+        if (appLogs.length === 0) {
+            list.innerHTML = '<p style="text-align:center; font-size:12px; color:var(--text-muted);">لا توجد عمليات مسجلة حتى الآن.</p>';
+        } else {
+            appLogs.forEach(l => {
+                let div = document.createElement('div');
+                div.style.cssText = 'background:var(--card-inner); padding:8px 12px; border-radius:8px; margin-bottom:6px; font-size:12px; border:1px solid var(--border-color);';
+                div.innerHTML = `<span style="font-size:10px; color:var(--text-muted); display:block;">${l.time}</span><b>${l.text}</b>`;
+                list.appendChild(div);
+            });
+        }
         document.getElementById('generalLogModal').style.display = 'flex';
     }
-    function closeGeneralLogModal() { document.getElementById('generalLogModal').style.display = 'none'; }
+    function closeGeneralLogModal() {
+        document.getElementById('generalLogModal').style.display = 'none';
+    }
 
     function exportDataBackup() {
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allCustomers));
-        const dlAnchor = document.createElement('a');
-        dlAnchor.setAttribute("href", dataStr);
-        dlAnchor.setAttribute("download", `rashed_backup_${new Date().toISOString().split('T')[0]}.json`);
-        document.body.appendChild(dlAnchor);
-        dlAnchor.click();
-        dlAnchor.remove();
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", `نسخة_أقساط_الراشد_${new Date().toISOString().split('T')[0]}.json`);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+        showToast('تم تصدير النسخة الاحتياطية بنجاح!');
     }
 
     function importDataBackup(event) {
@@ -1113,18 +1187,19 @@
         reader.onload = function(e) {
             try {
                 const imported = JSON.parse(e.target.result);
-                allCustomers = imported;
-                saveState();
-                showToast('تم استيراد النسخة الاحتياطية بنجاح!');
-                closeGeneralLogModal();
+                if (imported && typeof imported === 'object') {
+                    allCustomers = imported;
+                    saveState();
+                    showToast('تم استيراد البيانات ومزامنتها بنجاح!');
+                }
             } catch (err) {
-                alert('ملف النسخة غير صالح!');
+                showToast('خطأ في ملف النسخة الاحتياطية!');
             }
         };
         reader.readAsText(file);
     }
 
-    // التهيئة البدائية
+    // التشغيل المبدئي عند تحميل الصفحة
     renderTable();
 </script>
 </body>
