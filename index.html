@@ -549,13 +549,14 @@
       messagingSenderId: "946603870783",
       appId: "1:946603870783:web:59aaa8549fab98635fc68a",
       measurementId: "G-CKF2TS086Q"
+      databaseURL: "https://rashedshopv1-default-rtdb.firebaseio.com
     };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     
     // تفعيل التخزين المحالي للـ Firebase Offline
-    db.ref().keepSynced(true);
+
 
     let allCustomers = JSON.parse(localStorage.getItem('local_installments')) || {};
     let appLogs = JSON.parse(localStorage.getItem('local_app_logs')) || [];
