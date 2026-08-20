@@ -8,9 +8,38 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
-    <!-- Firebase SDK (Modular App & Database) -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <!-- Firebase SDK v9 (Modular Script CDN) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+        // إعدادات الفايربيس الخاصة بمشروعك
+        const firebaseConfig = {
+            apiKey: "AIzaSyC6nz1_dENnayngLi1iiq8KDOKQmbfwNDI",
+            authDomain: "rashedshopv1.firebaseapp.com",
+            projectId: "rashedshopv1",
+            storageBucket: "rashedshopv1.firebasestorage.app",
+            messagingSenderId: "946603870783",
+            appId: "1:946603870783:web:59aaa8549fab98635fc68a",
+            measurementId: "G-CKF2TS086Q",
+            databaseURL: "https://rashedshopv1-default-rtdb.firebaseio.com"
+        };
+
+        // تهيئة الفايربيس
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // ربط الفايربيس بالنافذة العامة لتسهيل الوصول المباشر
+        window.fbDatabase = db;
+        window.fbRef = ref;
+        window.fbSet = set;
+        window.fbOnValue = onValue;
+
+        // بدء المزامنة فور اكتمال تحميل الفايربيس
+        if (window.initFirebaseSync) {
+            window.initFirebaseSync();
+        }
+    </script>
 
     <style>
         :root {
@@ -83,7 +112,7 @@
             gap: 5px;
         }
         .sync-online { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
-        .sync-offline { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .sync-connecting { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
 
         .btn-action-top {
             background: var(--card-inner);
@@ -237,7 +266,7 @@
 
         .theme-toggle-btn { position: fixed; bottom: 20px; left: 20px; width: 45px; height: 45px; border-radius: 50%; background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-main); display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; box-shadow: 0 4px 15px var(--shadow); z-index: 9000; }
 
-        /* ==================== تصميم معاينة التقرير A4 ==================== */
+        /* معاينة تقرير A4 */
         .report-preview-overlay {
             display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(15, 23, 42, 0.95); z-index: 10000;
@@ -307,11 +336,11 @@
     <div id="mainView">
         <header>
             <div>
-                <h2 style="margin:0; font-size: 18px;">مركز الراشد - نظام الأقساط الذكي 📱</h2>
-                <span style="font-size:11px; color: var(--text-muted);">إدارة العقود والمبيعات - ربط سحابي مباشر</span>
+                <h2 style="margin:0; font-size: 18px;">مركز الراشد - نظام إدارة الأقساط 📱</h2>
+                <span style="font-size:11px; color: var(--text-muted);">إدارة العقود والمبيعات - مزامنة سحابية + محلي</span>
             </div>
             <div class="btn-header-group">
-                <div id="syncIndicator" class="sync-status sync-offline">🔴 جاري الاتصال...</div>
+                <div class="sync-status sync-connecting" id="syncBadge">⚡ جاري ربط الفايربيس...</div>
                 <button class="btn-action-top" onclick="openCalculatorModal()">🧮 حاسبة سريعة</button>
                 <button class="btn-action-top" onclick="openGeneralLogModal()">📋 السجل والنسخ الاحتياطي</button>
             </div>
@@ -480,7 +509,7 @@
 
 <div class="modal-overlay" id="singlePayModal">
     <div class="modal-content">
-        <h3 style="margin-top:0;" id="singlePayTitle">تسجيل دفعة</h3>
+        <h3 style="margin-top:0;" id="singlePayTitle">تسديد دفعة</h3>
         <p style="font-size:12px; color:var(--text-muted);" id="singlePaySubTitle">المتبقي: 0</p>
         <input type="text" inputmode="numeric" id="singlePayInput" placeholder="أدخل المبلغ" oninput="formatInputWithCommas(this)" style="margin-bottom:12px;">
         <button class="btn-main" style="width:100%;" onclick="confirmSinglePayment()">تأكيد الدفع 💳</button>
@@ -540,65 +569,62 @@
 </div>
 
 <script>
-    // ==================== FIREBASE REALTIME DATABASE ====================
-    const firebaseConfig = {
-      apiKey: "AIzaSyC6nz1_dENnayngLi1iiq8KDOKQmbfwNDI",
-      authDomain: "rashedshopv1.firebaseapp.com",
-      projectId: "rashedshopv1",
-      storageBucket: "rashedshopv1.firebasestorage.app",
-      messagingSenderId: "946603870783",
-      appId: "1:946603870783:web:59aaa8549fab98635fc68a",
-      measurementId: "G-CKF2TS086Q",
-      databaseURL: "https://rashedshopv1-default-rtdb.firebaseio.com"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    let allCustomers = {};
-    let appLogs = [];
+    let allCustomers = JSON.parse(localStorage.getItem('alrashed_customers_data')) || {};
+    let appLogs = JSON.parse(localStorage.getItem('alrashed_app_logs')) || [];
     let currentId = null;
     let activeFilter = 'all';
     let targetMonthIndexForPay = null;
 
-    // مراقبة الاتصال أونلاين بـ Firebase Realtime Database
-    db.ref(".info/connected").on("value", (snap) => {
-        const ind = document.getElementById("syncIndicator");
-        if (snap.val() === true) {
-            ind.className = "sync-status sync-online";
-            ind.innerHTML = "🟢 متصل بالإنترنت";
-        } else {
-            ind.className = "sync-status sync-offline";
-            ind.innerHTML = "🔴 غير متصل";
-        }
-    });
-
-    // المزامنة والربط المباشر مع Realtime Database
-    db.ref("customers").on("value", (snapshot) => {
-        const data = snapshot.val();
-        allCustomers = data || {};
-        renderTable();
-        if (currentId && allCustomers[currentId]) {
-            viewCustomer(currentId);
-        }
-    });
-
-    db.ref("logs").on("value", (snapshot) => {
-        const data = snapshot.val();
-        appLogs = data || [];
-    });
-
+    // المزامنة بين الحاسبة والسيرفر الفايربيس
     function saveState() {
-        db.ref("customers").set(allCustomers);
+        localStorage.setItem('alrashed_customers_data', JSON.stringify(allCustomers));
+        localStorage.setItem('alrashed_app_logs', JSON.stringify(appLogs));
+
+        if (window.fbDatabase) {
+            try {
+                window.fbSet(window.fbRef(window.fbDatabase, 'alrashed_app_data'), {
+                    customers: allCustomers,
+                    logs: appLogs
+                });
+            } catch (e) {
+                console.error("Firebase sync error:", e);
+            }
+        }
     }
+
+    // الاستماع للبيانات من الفايربيس عند فتح التطبيق
+    window.initFirebaseSync = function() {
+        const badge = document.getElementById('syncBadge');
+        const dbRef = window.fbRef(window.fbDatabase, 'alrashed_app_data');
+        
+        window.fbOnValue(dbRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                if (data.customers) allCustomers = data.customers;
+                if (data.logs) appLogs = data.logs;
+                localStorage.setItem('alrashed_customers_data', JSON.stringify(allCustomers));
+                localStorage.setItem('alrashed_app_logs', JSON.stringify(appLogs));
+                renderTable();
+                if (currentId) viewCustomer(currentId);
+            }
+            if (badge) {
+                badge.className = 'sync-status sync-online';
+                badge.innerText = '☁️ متصل ومزامن سحابياً';
+            }
+        }, (error) => {
+            if (badge) {
+                badge.className = 'sync-status sync-connecting';
+                badge.innerText = '💻 وضع محلي (الحاسبة)';
+            }
+        });
+    };
 
     function addLog(text) {
         const logItem = { time: new Date().toLocaleString('ar-IQ'), text: text };
         appLogs.unshift(logItem);
-        db.ref("logs").set(appLogs);
+        saveState();
     }
 
-    // ==================== الدوال المساعدة ====================
     function parseNum(val) {
         if (!val) return 0;
         return parseFloat(val.toString().replace(/,/g, '')) || 0;
@@ -642,7 +668,6 @@
         document.body.setAttribute('data-theme', 'light');
     }
 
-    // ==================== الحسابات والإضافة ====================
     function autoCalcTotal() {
         const cash = parseNum(document.getElementById('cashPrice').value);
         const profit = parseNum(document.getElementById('profitPrice').value);
@@ -696,8 +721,8 @@
         };
 
         saveState();
-        addLog(`تمت إضافة الزبون العقد الجديد: ${name}`);
-        showToast('تم حفظ العقد وتوليد الأقساط بنجاح!');
+        addLog(`تمت إضافة العقد الجديد: ${name}`);
+        showToast('تم حفظ العقد بنجاح ومزامنته سحابياً!');
         
         document.getElementById('custName').value = '';
         document.getElementById('custPhone').value = '';
@@ -708,9 +733,9 @@
         document.getElementById('firstPay').value = '';
         document.getElementById('monthlyAmountInput').value = '';
         validateForm();
+        renderTable();
     }
 
-    // ==================== الجدول والعرض ====================
     function setFilter(filter, btn) {
         activeFilter = filter;
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -807,7 +832,6 @@
         document.getElementById('dashCollected').innerText = formatNum(collected);
     }
 
-    // ==================== تفاصيل الزبون ====================
     function viewCustomer(id) {
         currentId = id;
         const c = allCustomers[id];
@@ -861,7 +885,6 @@
         renderTable();
     }
 
-    // ==================== التسديد والتوزيع ====================
     function openSinglePayModal(idx) {
         targetMonthIndexForPay = idx;
         const c = allCustomers[currentId];
@@ -933,7 +956,6 @@
         showToast('تم توزيع المبلغ بنجاح على الأقساط!');
     }
 
-    // ==================== الحركات والتعديلات ====================
     function openMonthPaymentsModal(idx) {
         const c = allCustomers[currentId];
         const m = c.months[idx];
@@ -1017,7 +1039,6 @@
         showMain();
     }
 
-    // ==================== التقارير والطباعة ====================
     function openFullReportPreview() {
         const c = allCustomers[currentId];
         if (!c) return;
@@ -1069,9 +1090,7 @@
         document.getElementById('reportPreviewModal').style.display = 'none';
     }
 
-    function printReportPaper() {
-        window.print();
-    }
+    function printReportPaper() { window.print(); }
 
     function shareReportImage() {
         const element = document.getElementById('printableReportPaper');
@@ -1080,10 +1099,7 @@
             canvas.toBlob(blob => {
                 const file = new File([blob], `كشف_حساب_${allCustomers[currentId].name}.png`, { type: 'image/png' });
                 if (navigator.share && navigator.canShare({ files: [file] })) {
-                    navigator.share({
-                        title: 'كشف حساب - مركز الراشد',
-                        files: [file]
-                    }).catch(err => console.log(err));
+                    navigator.share({ title: 'كشف حساب - مركز الراشد', files: [file] }).catch(err => console.log(err));
                 } else {
                     showToast('المشاركة المباشرة غير مدعومة في متصفحك.');
                 }
@@ -1099,7 +1115,7 @@
             link.download = `كشف_حساب_${allCustomers[currentId].name}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
-            showToast('تم تنزيل الصورة! يمكنك الآن إرسالها بالواتساب.');
+            showToast('تم تنزيل الصورة!');
         });
     }
 
@@ -1114,7 +1130,7 @@
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
         };
         html2pdf().set(opt).from(element).save().then(() => {
-            showToast('تم تنزيل PDF! يمكنك مشاركته بملف عبر الواتساب.');
+            showToast('تم تنزيل PDF!');
         });
     }
 
@@ -1136,13 +1152,8 @@
         window.open(`https://wa.me/${phoneFixed}?text=${encodeURIComponent(msg)}`, '_blank');
     }
 
-    // ==================== الحواسب والسجلات والنسخ الاحتياطي ====================
-    function openCalculatorModal() {
-        document.getElementById('calcModal').style.display = 'flex';
-    }
-    function closeCalculatorModal() {
-        document.getElementById('calcModal').style.display = 'none';
-    }
+    function openCalculatorModal() { document.getElementById('calcModal').style.display = 'flex'; }
+    function closeCalculatorModal() { document.getElementById('calcModal').style.display = 'none'; }
     function runCalc() {
         const amt = parseNum(document.getElementById('cAmount').value);
         const monthly = parseNum(document.getElementById('cMonthly').value);
@@ -1171,9 +1182,7 @@
         }
         document.getElementById('generalLogModal').style.display = 'flex';
     }
-    function closeGeneralLogModal() {
-        document.getElementById('generalLogModal').style.display = 'none';
-    }
+    function closeGeneralLogModal() { document.getElementById('generalLogModal').style.display = 'none'; }
 
     function exportDataBackup() {
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(allCustomers));
@@ -1197,7 +1206,8 @@
                 if (imported && typeof imported === 'object') {
                     allCustomers = imported;
                     saveState();
-                    showToast('تم رفع النسخة وإعادة مزامنة قاعدة البيانات السحابية!');
+                    renderTable();
+                    showToast('تم استيراد البيانات وإعادة تحميل النظام بنجاح!');
                 }
             } catch (err) {
                 showToast('خطأ في ملف النسخة الاحتياطية!');
@@ -1205,6 +1215,8 @@
         };
         reader.readAsText(file);
     }
+
+    renderTable();
 </script>
 </body>
 </html>
